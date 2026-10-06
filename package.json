@@ -1,14 +1,13 @@
 {
-  "name": "${PROJECT_NAME}",
+  "name": "training_qdoc",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc"
   },
-  "dependencies": {},
   "devDependencies": {
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   },
   "private": true
 }
