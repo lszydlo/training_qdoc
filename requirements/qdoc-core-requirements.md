@@ -4,7 +4,7 @@
 - **Version:** 0.1, 2026-10-06
 - **Status:** draft
 - **Entity specified:** the QDoc System
-- **Size:** 40 use cases, 300 rules
+- **Size:** 40 use cases, 303 rules
 
 ## 1. Introduction
 
@@ -87,7 +87,8 @@ and modelled without the rest of the document.
 
   A QDoc is `active` or `retired`. A QACK is `to sign`, `overdue`, `signed`
   or `closed`. A suggestion is `open`, `accepted` or `discarded`. An
-  attachment has the scan status `quarantine`, `released` or `failed`.
+  attachment has the scan status `quarantine`, `released` or `failed`. A
+  review mark has the kind `reviewed` or `do not care`.
 
 ## 3. Preparation
 
@@ -414,15 +415,16 @@ The authors need to see what changed between two versions of one QDoc.
 ## 4. Review
 
 The optional round in which named reviewers read a locked version, comment,
-suggest and acknowledge each file, and the owner takes the version back to
-resolve what they said. A review gives no verdict.
+suggest and acknowledge each file, or set aside a file outside their
+competence, and the owner takes the version back to resolve what they said. A
+review gives no verdict.
 
 | Use case | ID | Rules |
 | --- | --- | --- |
 | Name the reviewers | N-REVW-01 | 6 |
 | Send a version for review | N-REVW-02 | 9 |
 | Comment and suggest during review | N-REVW-03 | 5 |
-| Mark a file as reviewed | N-REVW-04 | 8 |
+| Mark a file as reviewed or do not care | N-REVW-04 | 11 |
 | Learn that the reviews are complete | N-REVW-05 | 4 |
 | Revert a version to draft | N-REVW-06 | 9 |
 
@@ -498,10 +500,11 @@ review, proposing new wording where the reviewer sees the need.
 - While the version is in the status In review, the QDoc System shall keep
   each suggestion on the version in the status open.
 
-### N-REVW-04 Mark a file as reviewed
+### N-REVW-04 Mark a file as reviewed or do not care
 
 The reviewers need to state for each file of the version that the reviewer has
-checked the file.
+checked the file, or that the file lies outside the competence of the
+reviewer.
 
 - If the user who submits the review mark is outside the reviewers of the
   version, the QDoc System shall reject the review mark.
@@ -509,15 +512,24 @@ checked the file.
   status In review, the QDoc System shall reject the review mark.
 - If the reviewer submits the review mark for the file that holds the review
   mark of the reviewer, the QDoc System shall reject the review mark.
+- If the review mark carries the kind outside [reviewed OR do not care], the
+  QDoc System shall reject the review mark.
+- If the reviewer submits the review mark of the kind do not care while each
+  other file of the version holds the review mark of the kind do not care of
+  the reviewer, the QDoc System shall reject the review mark.
 - When the QDoc System accepts the review mark, the QDoc System shall record
-  the review mark of the reviewer on the file.
+  the review mark of the reviewer on the file with the kind of the review
+  mark.
 - The QDoc System shall count each attachment of the version among the files
-  that each reviewer marks as reviewed.
+  that each reviewer marks.
 - When the QDoc System accepts the review mark, the QDoc System shall keep the
   status of the version unchanged.
-- When the QDoc System accepts the review mark, the QDoc System shall add to
-  the audit log the audit entry with the action "File marked as reviewed" for
-  the file of the version.
+- When the QDoc System accepts the review mark of the kind reviewed, the QDoc
+  System shall add to the audit log the audit entry with the action "File
+  marked as reviewed" for the file of the version.
+- When the QDoc System accepts the review mark of the kind do not care, the
+  QDoc System shall add to the audit log the audit entry with the action "File
+  marked as do not care" for the file of the version.
 - When the QDoc System accepts the review mark, the QDoc System shall add to
   the activity log of the QDoc the activity entry for the property "Review
   mark".
@@ -528,7 +540,8 @@ The owners need to hear once when the reviewers have finished, without
 watching each review mark.
 
 - The QDoc System shall count the reviews of the version as complete when each
-  reviewer of the version holds one review mark on each file of the version.
+  reviewer of the version holds one review mark of the kind [reviewed OR do
+  not care] on each file of the version.
 - When the reviews of the version become complete, the QDoc System shall
   notify the owner of the QDoc once per review round.
 - When the QDoc System sends for review the version whose reviews are
@@ -1279,8 +1292,14 @@ The name in bold is the only name the statements use.
   its time. Its status is open, accepted or discarded. To **resolve** a
   suggestion is to accept or discard it; the **outcome** is accepted or
   discarded.
-- **Review mark**: one reviewer's statement that the reviewer checked one
-  file. An acknowledgement, not a verdict.
+- **Review mark**: one reviewer's statement on one file, of the kind
+  reviewed or do not care. An acknowledgement, not a verdict. Each rule that
+  names the review mark holds for both kinds.
+- **Reviewed**: the kind of review mark that says the reviewer checked the
+  file.
+- **Do not care**: the kind of review mark that says the file lies outside
+  the competence of the reviewer. A reviewer holds at least one review mark
+  of the kind reviewed among the review marks of a version.
 - **Reviews of a version**: the review marks of each reviewer on each file.
 - **Review round**: the time a version spends in the status In review, from
   sending to reverting or sending for approval.

@@ -1005,7 +1005,7 @@
         ['Owner: approved, waiting for publication', 'anna', '#/qdoc/SOP-9'],
         ['Owner: effective, open a new draft', 'anna', '#/qdoc/SOP-4'],
         ['Contributor: co-writing a draft', 'piotr', '#/qdoc/SOP-11/file/f-proc'],
-        ['Reviewer: mark files as reviewed', 'marta', '#/qdoc/WI-7'],
+        ['Reviewer: mark files as reviewed or do not care', 'marta', '#/qdoc/WI-7'],
         ['Approver: approve with signature', 'anna', '#/qdoc/POL-3'],
         ['Quality manager: publish an approved version', 'ewa', '#/qdoc/SOP-9'],
         ['Quality manager: approve as the required approver', 'ewa', '#/qdoc/POL-3'],
@@ -1046,6 +1046,7 @@
         approvers: [],
         recipients: [],
         marks: {},
+        skips: {},
         approvals: {},
         quiz: { on: false, questions: [] },
         retrain: false,
@@ -1189,9 +1190,11 @@
               approvers: ['ewa'],
               recipients: ['g:lab'],
               marks: { [wi7b.id]: ['marta'] },
+              skips: { [wi7b.id]: ['jonas'] },
             }),
           ],
           activity: [
+            { when: '2026-10-03 11:10', who: 'jonas', prop: 'Review mark: Safety notes', prev: 'none', next: 'Do not care' },
             { when: '2026-10-03 10:25', who: 'marta', prop: 'Review mark: Safety notes', prev: 'none', next: 'Reviewed' },
             { when: '2026-10-02 14:00', who: 'anna', prop: 'Status', prev: 'Draft', next: 'In review' },
             { when: '2026-10-01 09:30', who: 'anna', prop: 'Reviewers', prev: 'none', next: 'Marta Lis, Jonas Weber' },
@@ -1376,6 +1379,7 @@
             ['2026-10-04 08:50', 'Ewa Maj', 'File approved (signed)', 'POL-3 version 1.1, Policy'],
             ['2026-10-03 16:15', 'Piotr Nowak', 'Version sent for approval', 'POL-3 version 1.1'],
             ['2026-10-03 15:45', 'Marta Lis', 'Version sent for review', 'WI-2 version 0.1'],
+            ['2026-10-03 11:10', 'Jonas Weber', 'File marked as do not care', 'WI-7 version 0.1, Safety notes'],
             ['2026-10-03 10:25', 'Marta Lis', 'File marked as reviewed', 'WI-7 version 0.1, Safety notes'],
             ['2026-10-03 09:00', 'Anna Kowalska', 'Version sent for approval', 'WI-5 version 0.2'],
             ['2026-10-02 14:00', 'Anna Kowalska', 'Version sent for review', 'WI-7 version 0.1'],
@@ -1467,7 +1471,12 @@
           ? `<p class="dim">PDF attachment, ${f.size}. <button class="btn sm" data-act="dl" data-n="${esc(f.name)}">Download</button></p>`
           : f.paras.map((x) => `<div class="para ${x.h ? 'h' : ''}"><div class="ptext">${esc(x.text)}</div></div>`).join('');
       const openSuggestions = (v) => v.files.reduce((n, f) => n + (f.kind === 'content' ? f.suggestions.filter((s) => s.status === 'open').length : 0), 0);
-      const marked = (v, f, u) => (v.marks[f.id] || []).includes(u);
+      // A review mark is "Reviewed" or "Do not care" (file outside the reviewer's competence); either one counts as a mark.
+      const reviewed = (v, f, u) => (v.marks[f.id] || []).includes(u);
+      const skipped = (v, f, u) => (v.skips[f.id] || []).includes(u);
+      const marked = (v, f, u) => reviewed(v, f, u) || skipped(v, f, u);
+      // A reviewer reviews at least one file: "Do not care" is refused once every other file holds that mark.
+      const canSkip = (v, f, u) => v.files.some((x) => x !== f && !skipped(v, x, u));
       const approved = (v, f, u) => (v.approvals[f.id] || []).some((a) => a.who === u);
 
       function roles(q, v, u) {
@@ -1578,9 +1587,10 @@
       function touch(q, v, f, what) {
         f.history.unshift({ who: S.me, when: stamp(), what });
         q.updated = stamp();
-        const had = (v.marks[f.id] || []).length + (v.approvals[f.id] || []).length;
+        const had = (v.marks[f.id] || []).length + (v.skips[f.id] || []).length + (v.approvals[f.id] || []).length;
         if (had) {
           delete v.marks[f.id];
+          delete v.skips[f.id];
           delete v.approvals[f.id];
           log(q, S.me, `Review marks and approvals: ${f.name}`, 'kept', 'dropped, file changed');
           toast(`${f.name} changed: its review marks and approvals were dropped.`);
@@ -1609,6 +1619,13 @@
         (v.marks[f.id] ||= []).push(u);
         log(q, u, `Review mark: ${f.name}`, 'none', 'Reviewed');
         audit(u, 'File marked as reviewed', rec(q, v, f.name));
+        checkReviews(q, v);
+      }
+      function markSkipped(q, v, f, u) {
+        if (!canSkip(v, f, u)) return toast('Mark at least one file as reviewed. You cannot mark every file as "Do not care".');
+        (v.skips[f.id] ||= []).push(u);
+        log(q, u, `Review mark: ${f.name}`, 'none', 'Do not care');
+        audit(u, 'File marked as do not care', rec(q, v, f.name));
         checkReviews(q, v);
       }
       function approveFile(q, v, f, u) {
@@ -1716,7 +1733,7 @@
             out.push({ kind: 'Publish', cls: 'b', label, detail: `Version ${v.no} is approved and waits for an effective date`, href, cta: 'Publish' });
           if (r.reviewer && v.status === 'In review') {
             const left = v.files.filter((f) => !marked(v, f, u)).length;
-            if (left) out.push({ kind: 'Review', cls: 'v', label, detail: `${left} of ${plural(v.files.length, 'file')} left to mark as reviewed`, href, cta: 'Review' });
+            if (left) out.push({ kind: 'Review', cls: 'v', label, detail: `${left} of ${plural(v.files.length, 'file')} left to mark`, href, cta: 'Review' });
           }
           if (r.approver && v.status === 'In approval') {
             const left = v.files.filter((f) => !approved(v, f, u)).length;
@@ -1948,7 +1965,7 @@
               ? 'Draft. As a quality manager you do on this QDoc what its owner and contributors do.'
               : 'Draft. You are a contributor: write, comment and suggest. The owner sends the version on.',
           'In review': r.reviewer
-            ? `Review requested by ${name(q.owner)}. Read each file, comment or suggest, then mark it as reviewed. A mark is an acknowledgement, not a verdict.`
+            ? `Review requested by ${name(q.owner)}. Read each file, comment or suggest, then mark it as reviewed. Mark a file outside your competence as "Do not care"; at least one file must be marked as reviewed. A mark is an acknowledgement, not a verdict.`
             : 'In review. The content is locked: nobody edits, adds or removes a file. Revert to draft to resolve suggestions.',
           'In approval': r.approver
             ? 'Approve each file with your electronic signature, or decline the version with a comment. Nobody comments in this status.'
@@ -1984,7 +2001,12 @@
       }
 
       function fileAction(v, f, p) {
-        if (p.mark) return marked(v, f, S.me) ? '<span class="pill g">Reviewed by you</span>' : `<button class="btn sm primary" data-act="mark" data-fid="${f.id}">Mark as reviewed</button>`;
+        if (p.mark) {
+          if (reviewed(v, f, S.me)) return '<span class="pill g">Reviewed by you</span>';
+          if (skipped(v, f, S.me)) return '<span class="pill">Do not care: outside your competence</span>';
+          const can = canSkip(v, f, S.me);
+          return `<button class="btn sm primary" data-act="mark" data-fid="${f.id}">Mark as reviewed</button><button class="btn sm" data-act="skip" data-fid="${f.id}" ${can ? 'title="This file is outside your competence"' : 'disabled title="Mark at least one file as reviewed"'}>Do not care</button>`;
+        }
         if (p.approve) return approved(v, f, S.me) ? '<span class="pill g">Approved by you</span>' : `<button class="btn sm primary" data-act="approve" data-fid="${f.id}">Approve</button>`;
         return '';
       }
@@ -1992,6 +2014,7 @@
       function tabFiles(q, v, r, p) {
         const frac = (list, test) => (list.length ? `${list.filter(test).length}/${list.length}` : '<span class="no">n/a</span>');
         const content = v.files.filter((f) => f.kind === 'content');
+        const skipCount = (f) => v.reviewers.filter((u) => skipped(v, f, u)).length;
         const rows = v.files
           .map((f) => {
             const isPdf = f.kind === 'pdf';
@@ -2005,21 +2028,23 @@
             if (p.edit && (isPdf || content.length > 1)) acts.push(`<button class="btn sm ghost danger" data-act="removeFile" data-fid="${f.id}">Remove</button>`);
             return `<tr><td>${nameCell}</td><td class="nw">${isPdf ? 'PDF attachment' : 'Content file'}</td>
               <td class="num">${isPdf ? '' : f.comments.length}</td><td class="num">${isPdf ? '' : f.suggestions.filter((s) => s.status === 'open').length}</td>
-              <td class="num">${frac(v.reviewers, (u) => marked(v, f, u))}</td><td class="num">${frac(v.approvers, (u) => approved(v, f, u))}</td><td class="r"><span class="acts" style="justify-content:flex-end">${acts.join('')}</span></td></tr>`;
+              <td class="num nw">${frac(v.reviewers, (u) => marked(v, f, u))}${skipCount(f) ? ` <span class="dim small">(${skipCount(f)} do not care)</span>` : ''}</td><td class="num">${frac(v.approvers, (u) => approved(v, f, u))}</td><td class="r"><span class="acts" style="justify-content:flex-end">${acts.join('')}</span></td></tr>`;
           })
           .join('');
-        const matrix = (title, people, test, hint) =>
+        const matrix = (title, people, cell, hint) =>
           `<section><h2>${title}</h2><p class="dim small" style="margin:-6px 0 8px">${hint}</p><div class="scroll"><table><thead><tr><th>File</th>${people.map((u) => `<th class="num">${esc(name(u))}${isQM(u) ? ' (QM)' : ''}</th>`).join('')}</tr></thead>
-            <tbody>${v.files.map((f) => `<tr><td>${esc(f.name)}</td>${people.map((u) => `<td class="num">${test(f, u) ? '<span class="ok" aria-label="done">✓</span>' : '<span class="no" aria-label="waiting">–</span>'}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`;
+            <tbody>${v.files.map((f) => `<tr><td>${esc(f.name)}</td>${people.map((u) => `<td class="num">${cell(f, u)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`;
+        const tick = (done) => (done ? '<span class="ok" aria-label="done">✓</span>' : '<span class="no" aria-label="waiting">–</span>');
+        const markCell = (f, u) => (skipped(v, f, u) ? '<span class="dim" aria-label="do not care" title="Do not care: outside the reviewer\'s competence">⊘</span>' : tick(reviewed(v, f, u)));
         const ready = readiness(v);
         return `<section><div class="head" style="margin-bottom:10px"><h2>Files in version ${v.no}</h2>${
           p.edit ? `<div class="acts"><button class="btn sm" data-act="addFile">Add content file</button><button class="btn sm" data-act="upload">Upload PDF</button></div>` : ''
         }</div>
-          <div class="scroll"><table><thead><tr><th>File</th><th>Kind</th><th class="num">Comments</th><th class="num">Open suggestions</th><th class="num">Reviewed</th><th class="num">Approved</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+          <div class="scroll"><table><thead><tr><th>File</th><th>Kind</th><th class="num">Comments</th><th class="num">Open suggestions</th><th class="num">Review marks</th><th class="num">Approved</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
           ${v.status !== 'Draft' ? '<p class="hint">Outside draft nobody edits, adds or removes a file.</p>' : ''}</section>
           ${p.lead && !q.retired && ['Draft', 'In review'].includes(v.status) ? `<section><div class="card"><h2>Ready for approval?</h2><ul class="check">${ready.map((c) => `<li><span class="${c.ok ? 'ok' : 'no'}">${c.ok ? '✓' : '✕'}</span><span>${c.text}</span></li>`).join('')}</ul></div></section>` : ''}
-          ${v.reviewers.length && v.status !== 'Draft' ? matrix('Review marks', v.reviewers, (f, u) => marked(v, f, u), 'One mark per reviewer and file. The owner is told once, when every reviewer has marked every file.') : ''}
-          ${['In approval', 'Approved', 'Published', 'Effective'].includes(v.status) && v.approvers.length ? matrix('Approvals', v.approvers, (f, u) => approved(v, f, u), 'The version is approved once each approver has approved each file.') : ''}`;
+          ${v.reviewers.length && v.status !== 'Draft' ? matrix('Review marks', v.reviewers, markCell, 'One mark per reviewer and file: ✓ reviewed, ⊘ do not care (outside the reviewer\'s competence). Both count; each reviewer marks at least one file as reviewed. The owner is told once, when every reviewer has marked every file.') : ''}
+          ${['In approval', 'Approved', 'Published', 'Effective'].includes(v.status) && v.approvers.length ? matrix('Approvals', v.approvers, (f, u) => tick(approved(v, f, u)), 'The version is approved once each approver has approved each file.') : ''}`;
       }
 
       function tabPeople(q, v, r, p) {
@@ -2359,6 +2384,7 @@
           confirmDlg(`Remove ${f.name}?`, '<p>The file leaves this draft version. Earlier versions keep theirs.</p>', 'Remove', () => {
             v.files = v.files.filter((x) => x !== f);
             delete v.marks[f.id];
+            delete v.skips[f.id];
             delete v.approvals[f.id];
             log(q, S.me, 'Files', f.name, 'removed');
           }, 'danger');
@@ -2507,6 +2533,11 @@
           const q = openQ();
           const v = cur(q);
           markReviewed(q, v, v.files.find((f) => f.id === d.fid), S.me);
+        },
+        skip(d) {
+          const q = openQ();
+          const v = cur(q);
+          markSkipped(q, v, v.files.find((f) => f.id === d.fid), S.me);
         },
         approve(d) {
           const q = openQ();

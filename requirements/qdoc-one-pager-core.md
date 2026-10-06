@@ -23,8 +23,9 @@ is separate from quality authority.
    suggest and attach PDFs. The owner names reviewers, approvers and
    recipients, may flag the version public, and may add a quiz.
 3. **Review (optional).** The owner sends the version for review; the content
-   is locked. Reviewers comment, suggest, and mark each file as reviewed. They
-   give no verdict. The owner reverts to draft to resolve the suggestions.
+   is locked. Reviewers comment, suggest, and mark each file as reviewed, or
+   as "do not care" when it is outside their competence. They give no verdict.
+   The owner reverts to draft to resolve the suggestions.
 4. **Approve.** The owner sends the version for approval. Each approver
    approves each file with an electronic signature, or declines with a
    comment, which hands the version back to the owner.
@@ -51,7 +52,7 @@ Draft → In review → In approval → Approved → Published → Effective →
 | **Content file** | A rich-text file the contributors write; a version has at least one. Carries comments, suggestions and a change history. |
 | **Attachment** | A PDF added to a version; never edited; in quarantine until scanned. |
 | **Comment, suggestion** | A remark on, or a proposed edit to, a fragment of a content file. The owner accepts or discards each suggestion. |
-| **Review mark** | One reviewer's statement that they checked one file. An acknowledgement, not a verdict. |
+| **Review mark** | One reviewer's statement on one file: *reviewed* (they checked it) or *do not care* (it is outside their competence). An acknowledgement, not a verdict. |
 | **Approval** | One approver's authorisation of one file, bound to an electronic signature. |
 | **Electronic signature** | The user's identity plus password, re-entered for the action, with its meaning and time. |
 | **Recipient** | A user or a group named on a QDoc as having to learn its versions. The version is assigned to them. |
@@ -86,6 +87,9 @@ Draft → In review → In approval → Approved → Published → Effective →
   listed until a contributor removes it.
 - **Review apart from approval:** the owner cannot be a reviewer. The owner is
   told once, when every reviewer has marked every file.
+- **Do not care:** a "do not care" mark counts the same as a "reviewed" mark.
+  A reviewer marks at least one file as reviewed, never every file as "do not
+  care".
 - **Approval per file:** a version is approved once each approver has approved
   each file. At least one approver is a quality manager.
 - **Electronic signatures:** approving, declining, publishing, retiring and
