@@ -1,0 +1,2778 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>QDoc UI Prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    />
+    <style>
+      /* Layout: prototype bar on top, app shell with a left navigation, one main column per screen. */
+      :root {
+        --bg: #f6f8fb;
+        --surface: #ffffff;
+        --fg: #1a1f2b;
+        --dim: #5b6577;
+        --faint: #8a93a3;
+        --line: #e1e6ee;
+        --line-strong: #cdd4df;
+        --brand: #1d4ed8;
+        --brand-soft: #eff6ff;
+        --brand-ink: #1e40af;
+        --on-brand: #ffffff;
+        --quote: #f1f4f9;
+        --green: #2b8a3e;
+        --green-soft: #ebfbee;
+        --yellow: #a15c00;
+        --yellow-soft: #fff4d6;
+        --red: #c92a2a;
+        --red-soft: #fff0f0;
+        --violet: #6741d9;
+        --violet-soft: #f3f0ff;
+        --proto: #f4efe3;
+        --proto-ink: #6b5a2e;
+        --proto-line: #d9c99c;
+        --font: 'Raleway', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #14171e;
+          --surface: #1b1f28;
+          --fg: #e4e8ef;
+          --dim: #a3acbb;
+          --faint: #7a8496;
+          --line: #2b313d;
+          --line-strong: #3a4250;
+          --brand: #60a5fa;
+          --brand-soft: #1b2a45;
+          --brand-ink: #93c5fd;
+          --on-brand: #0f1420;
+          --quote: #222835;
+          --green: #69db7c;
+          --green-soft: #1d3324;
+          --yellow: #ffd43b;
+          --yellow-soft: #3a3118;
+          --red: #ff8787;
+          --red-soft: #3d2020;
+          --violet: #b197fc;
+          --violet-soft: #2a2442;
+          --proto: #2a2619;
+          --proto-ink: #d8c58f;
+          --proto-line: #5a4e2c;
+          color-scheme: dark;
+        }
+      }
+      :root[data-theme='dark'] {
+        --bg: #14171e;
+        --surface: #1b1f28;
+        --fg: #e4e8ef;
+        --dim: #a3acbb;
+        --faint: #7a8496;
+        --line: #2b313d;
+        --line-strong: #3a4250;
+        --brand: #60a5fa;
+        --brand-soft: #1b2a45;
+        --brand-ink: #93c5fd;
+        --on-brand: #0f1420;
+        --quote: #222835;
+        --green: #69db7c;
+        --green-soft: #1d3324;
+        --yellow: #ffd43b;
+        --yellow-soft: #3a3118;
+        --red: #ff8787;
+        --red-soft: #3d2020;
+        --violet: #b197fc;
+        --violet-soft: #2a2442;
+        --proto: #2a2619;
+        --proto-ink: #d8c58f;
+        --proto-line: #5a4e2c;
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: var(--font);
+        font-size: 15px;
+        line-height: 1.55;
+      }
+      a {
+        color: var(--brand);
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 2px solid var(--brand);
+        outline-offset: 2px;
+        border-radius: 3px;
+      }
+      h1,
+      h2,
+      h3 {
+        text-wrap: balance;
+        font-weight: 600;
+        margin: 0;
+      }
+      h1 {
+        font-size: 24px;
+        line-height: 1.25;
+      }
+      h2 {
+        font-size: 16px;
+      }
+      h3 {
+        font-size: 14px;
+      }
+      p {
+        margin: 0;
+      }
+      .mono {
+        font-family: var(--mono);
+        font-size: 0.92em;
+      }
+      .dim {
+        color: var(--dim);
+      }
+      .small {
+        font-size: 13px;
+      }
+
+      /* Prototype chrome */
+      .proto {
+        background: var(--proto);
+        color: var(--proto-ink);
+        border-bottom: 1px dashed var(--proto-line);
+        padding: 8px 16px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        align-items: center;
+        font-size: 13px;
+      }
+      .proto-tag {
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 11px;
+      }
+      .proto label {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        min-width: 0;
+        max-width: 100%;
+        white-space: nowrap;
+      }
+      .proto label select {
+        min-width: 0;
+        flex: 0 1 auto;
+      }
+      .proto select,
+      .proto button {
+        border: 1px solid var(--proto-line);
+        background: var(--surface);
+        color: var(--fg);
+        border-radius: 4px;
+        padding: 2px 8px;
+        max-width: 100%;
+      }
+      .proto button {
+        cursor: pointer;
+        background: transparent;
+        color: var(--proto-ink);
+      }
+      .proto .sim {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+      }
+      .proto .push {
+        margin-left: auto;
+      }
+
+      /* Shell */
+      .shell {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        min-height: calc(100vh - 42px);
+      }
+      .side {
+        background: var(--surface);
+        border-right: 1px solid var(--line);
+        padding: 20px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .brand {
+        font-weight: 700;
+        font-size: 18px;
+        padding: 0 10px 14px;
+        letter-spacing: 0.01em;
+      }
+      .nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 6px;
+        color: var(--fg);
+        text-decoration: none;
+        font-weight: 500;
+      }
+      .nav:hover {
+        background: var(--quote);
+      }
+      .nav.on {
+        background: var(--brand-soft);
+        color: var(--brand-ink);
+        font-weight: 600;
+      }
+      .count {
+        background: var(--brand);
+        color: var(--on-brand);
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 0 7px;
+        line-height: 18px;
+      }
+      .who {
+        margin-top: auto;
+        padding: 12px 10px 0;
+        border-top: 1px solid var(--line);
+        font-size: 13px;
+      }
+      .who b {
+        display: block;
+        font-size: 14px;
+      }
+      .main {
+        padding: 28px 36px 72px;
+        max-width: 1260px;
+        min-width: 0;
+      }
+      .crumbs {
+        font-size: 13px;
+        color: var(--dim);
+        margin-bottom: 8px;
+      }
+      .head {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 24px;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 18px;
+      }
+      .head .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 10px;
+        align-items: center;
+        margin-top: 8px;
+        color: var(--dim);
+        font-size: 13px;
+      }
+      .acts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      section + section {
+        margin-top: 28px;
+      }
+      section > h2 {
+        margin-bottom: 10px;
+      }
+
+      /* Controls */
+      .btn {
+        border: 1px solid var(--line-strong);
+        background: var(--surface);
+        border-radius: 6px;
+        padding: 6px 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        color: var(--fg);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+      .btn:hover {
+        border-color: var(--brand);
+      }
+      .btn.primary {
+        background: var(--brand);
+        border-color: var(--brand);
+        color: var(--on-brand);
+      }
+      .btn.danger {
+        color: var(--red);
+      }
+      .btn.sm {
+        padding: 2px 10px;
+        font-size: 13px;
+      }
+      .btn.ghost {
+        border-color: transparent;
+        background: transparent;
+        color: var(--brand);
+      }
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .field {
+        display: grid;
+        gap: 4px;
+        margin-top: 12px;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .field input,
+      .field select,
+      .field textarea,
+      .inp {
+        border: 1px solid var(--line-strong);
+        background: var(--surface);
+        border-radius: 6px;
+        padding: 7px 10px;
+        font-weight: 400;
+        font-size: 15px;
+        width: 100%;
+      }
+      textarea {
+        resize: vertical;
+        min-height: 84px;
+      }
+      .hint {
+        font-size: 13px;
+        color: var(--dim);
+        margin-top: 6px;
+      }
+
+      /* Pills, chips */
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 1px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        background: var(--quote);
+        color: var(--dim);
+        white-space: nowrap;
+      }
+      .pill.s-in-review,
+      .pill.v {
+        background: var(--violet-soft);
+        color: var(--violet);
+      }
+      .pill.s-in-approval,
+      .pill.s-quarantined,
+      .pill.y {
+        background: var(--yellow-soft);
+        color: var(--yellow);
+      }
+      .pill.s-approved,
+      .pill.s-effective,
+      .pill.s-released,
+      .pill.g {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+      .pill.s-published,
+      .pill.b {
+        background: var(--brand-soft);
+        color: var(--brand-ink);
+      }
+      .pill.s-failed,
+      .pill.s-retired,
+      .pill.r {
+        background: var(--red-soft);
+        color: var(--red);
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--line-strong);
+        border-radius: 999px;
+        padding: 2px 6px 2px 10px;
+        background: var(--surface);
+        font-size: 13px;
+      }
+      .chip.plain {
+        padding-right: 10px;
+      }
+      .chip button {
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        color: var(--dim);
+        border-radius: 999px;
+        padding: 0 4px;
+        line-height: 1.2;
+      }
+      .chip button:hover {
+        color: var(--red);
+      }
+      .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+      .filters button {
+        border: 1px solid var(--line-strong);
+        background: var(--surface);
+        border-radius: 999px;
+        padding: 3px 12px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .filters button[aria-pressed='true'] {
+        background: var(--brand-soft);
+        border-color: var(--brand);
+        color: var(--brand-ink);
+        font-weight: 600;
+      }
+
+      /* Cards, tables */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 16px 18px;
+      }
+      .card > h2,
+      .card > h3 {
+        margin-bottom: 8px;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 16px;
+      }
+      .scroll {
+        overflow-x: auto;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 14px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: middle;
+      }
+      th {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--dim);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      td.num,
+      th.num {
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+      }
+      td.r {
+        text-align: right;
+        white-space: nowrap;
+      }
+      td.r .acts {
+        flex-wrap: nowrap;
+      }
+      td.nw {
+        white-space: nowrap;
+      }
+      .panel .tabs button {
+        font-size: 13px;
+        padding: 8px 10px;
+      }
+      td a.strong {
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .ok {
+        color: var(--green);
+        font-weight: 700;
+      }
+      .no {
+        color: var(--faint);
+      }
+      .empty {
+        padding: 28px;
+        text-align: center;
+        color: var(--dim);
+      }
+
+      /* Lifecycle */
+      .steps {
+        list-style: none;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 0;
+        margin: 0 0 14px;
+        font-size: 13px;
+      }
+      .steps li {
+        padding: 3px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        color: var(--faint);
+        background: var(--surface);
+      }
+      .steps li.done {
+        color: var(--dim);
+        border-color: var(--line-strong);
+      }
+      .steps li.now {
+        background: var(--brand);
+        border-color: var(--brand);
+        color: var(--on-brand);
+        font-weight: 600;
+      }
+      .banner {
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--brand);
+        background: var(--surface);
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 14px;
+      }
+      .banner.red {
+        border-left-color: var(--red);
+        background: var(--red-soft);
+      }
+      .banner.green {
+        border-left-color: var(--green);
+      }
+      .banner blockquote {
+        margin: 6px 0 0;
+        padding-left: 10px;
+        border-left: 2px solid var(--line-strong);
+        font-style: italic;
+      }
+      .tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        border-bottom: 1px solid var(--line);
+        margin: 18px 0;
+      }
+      .tabs a,
+      .tabs button {
+        padding: 8px 14px;
+        text-decoration: none;
+        color: var(--dim);
+        font-weight: 600;
+        border: 0;
+        background: transparent;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+        cursor: pointer;
+      }
+      .tabs [aria-current='page'],
+      .tabs [aria-pressed='true'] {
+        color: var(--brand-ink);
+        border-bottom-color: var(--brand);
+      }
+      .check {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 4px;
+      }
+      .check li {
+        display: flex;
+        gap: 8px;
+      }
+
+      /* Tasks, notifications */
+      .rows {
+        display: grid;
+        gap: 8px;
+      }
+      .task {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px 16px;
+      }
+      .task .t {
+        font-weight: 600;
+      }
+      .note {
+        display: flex;
+        gap: 12px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 14px;
+      }
+      .note time {
+        color: var(--faint);
+        font-size: 12px;
+        white-space: nowrap;
+        flex: 0 0 112px;
+        padding-top: 2px;
+      }
+
+      /* Content file */
+      .fileview {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 20px;
+        align-items: start;
+      }
+      .doc {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 24px 28px;
+      }
+      .para {
+        padding: 3px 0;
+        border-left: 3px solid transparent;
+        margin-left: -14px;
+        padding-left: 11px;
+      }
+      .para.focus {
+        border-left-color: var(--brand);
+        background: var(--brand-soft);
+      }
+      .ptext {
+        white-space: pre-wrap;
+        border-radius: 4px;
+        padding: 2px 4px;
+        margin: 0 -4px;
+        min-height: 1.55em;
+      }
+      .para.h .ptext {
+        font-size: 18px;
+        font-weight: 600;
+        margin-top: 10px;
+      }
+      .ptext[contenteditable]:hover {
+        background: var(--quote);
+      }
+      .ptext[contenteditable]:empty::before {
+        content: attr(data-ph);
+        color: var(--faint);
+      }
+      .para {
+        position: relative;
+      }
+      .ptools,
+      .pacts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 6px;
+        align-items: center;
+      }
+      .ptools {
+        margin: 2px 0 4px;
+      }
+      .pacts {
+        position: absolute;
+        right: 0;
+        top: -24px;
+        z-index: 1;
+        background: var(--surface);
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        padding: 2px;
+        gap: 0;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .para:hover .pacts,
+      .para:focus-within .pacts,
+      .para.focus .pacts {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      @media (hover: none) {
+        .pacts {
+          position: static;
+          opacity: 1;
+          pointer-events: auto;
+          border: 0;
+          padding: 0;
+        }
+      }
+      ins {
+        background: var(--green-soft);
+        color: var(--green);
+        text-decoration: underline;
+      }
+      del {
+        background: var(--red-soft);
+        color: var(--red);
+      }
+      .pbreak {
+        display: block;
+        height: 10px;
+      }
+      .panel {
+        display: grid;
+        gap: 10px;
+      }
+      .thread {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-size: 14px;
+      }
+      .thread.closed {
+        opacity: 0.6;
+      }
+      .thread .by {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--dim);
+        margin-bottom: 4px;
+      }
+      .thread .by b {
+        color: var(--fg);
+        font-size: 13px;
+      }
+      .quote {
+        background: var(--quote);
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 13px;
+        color: var(--dim);
+        margin-bottom: 6px;
+      }
+      .reply {
+        border-top: 1px solid var(--line);
+        margin-top: 8px;
+        padding-top: 6px;
+      }
+      .inline {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .inline .inp {
+        font-size: 13px;
+        padding: 4px 8px;
+      }
+      .presence {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--dim);
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--green);
+      }
+
+      /* Audit log, QACK figures */
+      .bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .bar .inp {
+        width: auto;
+        max-width: 100%;
+      }
+      .bar input.inp {
+        flex: 1 1 220px;
+      }
+      .stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 32px;
+      }
+      .stat {
+        color: var(--dim);
+        font-size: 13px;
+      }
+      .stat b {
+        display: block;
+        font-size: 24px;
+        color: var(--fg);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Reading and training */
+      .read {
+        display: grid;
+        gap: 12px;
+      }
+      .read .card > .head {
+        margin-bottom: 4px;
+      }
+      .read .foot {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--line);
+      }
+      .qz {
+        border: 0;
+        padding: 0;
+        margin: 0 0 14px;
+      }
+      .qz legend {
+        font-weight: 600;
+        padding: 0;
+        margin-bottom: 4px;
+      }
+      .qz label {
+        display: flex;
+        gap: 8px;
+        padding: 3px 0;
+      }
+      .locked {
+        opacity: 0.6;
+      }
+
+      /* Dialog, toast */
+      dialog {
+        border: 1px solid var(--line-strong);
+        border-radius: 12px;
+        background: var(--surface);
+        color: var(--fg);
+        padding: 22px 24px;
+        width: min(480px, calc(100vw - 32px));
+      }
+      dialog::backdrop {
+        background: rgb(10 14 22 / 0.5);
+      }
+      dialog h2 {
+        font-size: 18px;
+        margin-bottom: 8px;
+      }
+      dialog .acts {
+        justify-content: flex-end;
+        margin-top: 18px;
+      }
+      dialog dl {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 2px 14px;
+        margin: 12px 0 0;
+        font-size: 14px;
+      }
+      dialog dt {
+        color: var(--dim);
+      }
+      dialog dd {
+        margin: 0;
+        font-weight: 600;
+      }
+      .err {
+        color: var(--red);
+        font-size: 13px;
+        margin-top: 8px;
+      }
+      #toast {
+        position: fixed;
+        left: 50%;
+        bottom: 24px;
+        transform: translateX(-50%);
+        background: var(--fg);
+        color: var(--bg);
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        max-width: min(560px, calc(100vw - 32px));
+        z-index: 10;
+      }
+
+      @media (max-width: 900px) {
+        .shell {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .side {
+          flex-direction: row;
+          flex-wrap: wrap;
+          align-items: center;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+          padding: 10px 16px;
+        }
+        .brand {
+          padding: 0 10px 0 0;
+        }
+        .who {
+          margin: 0 0 0 auto;
+          border: 0;
+          padding: 0;
+        }
+        .main {
+          padding: 20px 16px 56px;
+        }
+        .fileview {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .doc {
+          padding: 18px 18px 18px 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="proto" id="proto"></div>
+    <div id="app"></div>
+    <dialog id="dlg"></dialog>
+    <div id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script>
+      // ---------- Reference data ----------
+      const U = {
+        anna: { name: 'Anna Kowalska', level: 'Author' },
+        piotr: { name: 'Piotr Nowak', level: 'Author' },
+        marta: { name: 'Marta Lis', level: 'Author' },
+        jonas: { name: 'Jonas Weber', level: 'Author' },
+        ewa: { name: 'Ewa Maj', level: 'Quality manager' },
+        lena: { name: 'Lena Vogel', level: 'Employee' },
+        tom: { name: 'Tom Berg', level: 'Employee' },
+      };
+      const PERSONAS = ['anna', 'piotr', 'marta', 'jonas', 'ewa', 'lena', 'tom'];
+      const G = {
+        lab: { name: 'Laboratory staff', size: 14, members: ['lena'] },
+        qa: { name: 'QA team', size: 6, members: ['jonas'] },
+        prod: { name: 'Production operators', size: 32, members: ['tom'] },
+      };
+      const TYPES = { Policy: 'POL', SOP: 'SOP', 'Work Instruction': 'WI' };
+      const STEPS = ['Draft', 'In review', 'In approval', 'Approved', 'Published', 'Effective'];
+      const SCENARIOS = [
+        ['Owner: draft with open suggestions', 'anna', '#/qdoc/SOP-11'],
+        ['Owner: content file, comments and suggestions', 'anna', '#/qdoc/SOP-11/file/f-proc'],
+        ['Owner: compare versions', 'anna', '#/qdoc/SOP-11/versions'],
+        ['Owner: version declined', 'anna', '#/qdoc/WI-5'],
+        ['Owner: in review, progress', 'anna', '#/qdoc/WI-7'],
+        ['Owner: approved, waiting for publication', 'anna', '#/qdoc/SOP-9'],
+        ['Owner: effective, open a new draft', 'anna', '#/qdoc/SOP-4'],
+        ['Contributor: co-writing a draft', 'piotr', '#/qdoc/SOP-11/file/f-proc'],
+        ['Reviewer: mark files as reviewed', 'marta', '#/qdoc/WI-7'],
+        ['Approver: approve with signature', 'anna', '#/qdoc/POL-3'],
+        ['Quality manager: publish an approved version', 'ewa', '#/qdoc/SOP-9'],
+        ['Quality manager: approve as the required approver', 'ewa', '#/qdoc/POL-3'],
+        ['Quality manager: work on any draft', 'ewa', '#/qdoc/SOP-11'],
+        ['Quality manager: retire a QDoc', 'ewa', '#/qdoc/SOP-4'],
+        ['Quality manager: every QDoc', 'ewa', '#/qdocs'],
+        ['Quality manager: audit log', 'ewa', '#/audit'],
+        ['Author: library, assigned and public versions only', 'anna', '#/library'],
+        ['Employee: library, assigned and public versions only', 'lena', '#/library'],
+        ['Employee: read an effective version', 'lena', '#/library/SOP-11'],
+        ['Employee: read and sign an overdue QACK', 'lena', '#/qack/k-sop11-lena'],
+        ['Employee: read, pass the quiz and sign', 'lena', '#/qack/k-sop4-lena'],
+        ['Employee: QACK due on a coming effective date', 'tom', '#/qack/k-wi3-tom'],
+        ['Employee: my training and training records', 'tom', '#/training'],
+      ];
+
+      // ---------- State ----------
+      let seq = 100;
+      const uid = (p) => p + ++seq;
+      const para = (text, h) => ({ id: uid('p'), text, h: !!h });
+      const cfile = (name, paras, o = {}) => ({
+        id: uid('f'),
+        kind: 'content',
+        name,
+        paras: paras.map(([t, h]) => para(t, h)),
+        history: [],
+        comments: [],
+        suggestions: [],
+        ...o,
+      });
+      const pdf = (name, size, scan = 'released', reason = '') => ({ id: uid('a'), kind: 'pdf', name, size, scan, reason });
+      const ver = (no, status, o) => ({
+        no,
+        status,
+        files: [],
+        contributors: [],
+        reviewers: [],
+        approvers: [],
+        recipients: [],
+        marks: {},
+        approvals: {},
+        quiz: { on: false, questions: [] },
+        retrain: false,
+        declined: null,
+        effective: null,
+        reviewsDone: false,
+        public: false,
+        qacks: null,
+        ...o,
+      });
+
+      function seed() {
+        const proc10 = cfile('Procedure', [
+          ['Purpose', 1],
+          ['This procedure describes how measuring equipment is calibrated and how the results are recorded.'],
+          ['Interval', 1],
+          ['Each instrument is calibrated every 12 months by the laboratory technician.'],
+          ['An instrument past its calibration date is labelled and taken out of use.'],
+        ]);
+        const crit10 = cfile('Acceptance criteria', [
+          ['Limits', 1],
+          ['A balance passes when the deviation is within 0.5 mg of the reference weight.'],
+        ]);
+        const proc12 = cfile(
+          'Procedure',
+          [
+            ['Purpose', 1],
+            ['This procedure describes how measuring equipment is calibrated and how the results are recorded.'],
+            ['Interval', 1],
+            ['Each instrument is calibrated every 6 months by a trained laboratory technician.'],
+            ['An instrument past its calibration date is labelled and taken out of use.'],
+            ['Results are recorded in the calibration log on the day of the calibration.'],
+          ],
+          { id: 'f-proc' },
+        );
+        proc12.history = [
+          { who: 'anna', when: '2026-09-28 15:02', what: 'Added a paragraph on recording results' },
+          { who: 'piotr', when: '2026-09-27 11:40', what: 'Changed the interval from 12 to 6 months' },
+          { who: 'anna', when: '2026-09-24 09:00', what: 'File copied from version 1.0' },
+        ];
+        proc12.comments = [
+          {
+            id: uid('c'),
+            who: 'piotr',
+            when: '2026-09-27 11:44',
+            pid: proc12.paras[3].id,
+            text: 'Six months matches the supplier recommendation for balances. Do thermometers need a different interval?',
+            replies: [{ who: 'anna', when: '2026-09-27 13:10', text: 'Same interval for now; we revisit after the first cycle.' }],
+          },
+        ];
+        proc12.suggestions = [
+          {
+            id: uid('s'),
+            who: 'marta',
+            when: '2026-10-01 16:32',
+            pid: proc12.paras[4].id,
+            to: "An instrument past its calibration date is labelled 'Do not use' and moved to the quarantine shelf.",
+            status: 'open',
+          },
+        ];
+        const crit12 = cfile('Acceptance criteria', [
+          ['Limits', 1],
+          ['A balance passes when the deviation is within 0.5 mg of the reference weight.'],
+          ['A thermometer passes when the deviation is within 0.2 °C at each reference point.'],
+        ]);
+        crit12.history = [{ who: 'piotr', when: '2026-09-27 12:05', what: 'Added the thermometer limit' }];
+        crit12.suggestions = [
+          {
+            id: uid('s'),
+            who: 'jonas',
+            when: '2026-10-01 17:05',
+            pid: crit12.paras[1].id,
+            to: 'A balance passes when the deviation is within 0.3 mg of the reference weight.',
+            status: 'open',
+          },
+        ];
+        const cert = pdf('Calibration certificate template.pdf', '212 kB');
+        const sop11 = {
+          id: 'SOP-11',
+          title: 'Equipment calibration',
+          type: 'SOP',
+          owner: 'anna',
+          updated: '2026-10-02 09:12',
+          versions: [
+            ver('1.0', 'Effective', {
+              files: [proc10, crit10],
+              approvers: ['jonas', 'ewa'],
+              recipients: ['g:lab'],
+              effective: '2026-03-01',
+              qacks: { total: 14, signed: 13 },
+            }),
+            ver('1.2', 'Draft', {
+              files: [proc12, crit12, cert, pdf('Reference weights list.pdf', '1.4 MB', 'quarantine')],
+              contributors: ['piotr'],
+              reviewers: ['marta', 'jonas'],
+              approvers: ['jonas', 'ewa'],
+              recipients: ['g:lab', 'g:qa'],
+              marks: { [crit12.id]: ['marta', 'jonas'], [proc12.id]: ['jonas'], [cert.id]: ['marta', 'jonas'] },
+              quiz: {
+                on: true,
+                questions: [
+                  { q: 'How often is an instrument calibrated?', options: ['Every 3 months', 'Every 6 months', 'Every 12 months'], correct: 1 },
+                  { q: 'What happens to an instrument past its calibration date?', options: ['It stays in use', 'It is taken out of use'], correct: 1 },
+                ],
+              },
+              retrain: true,
+            }),
+          ],
+          activity: [
+            { when: '2026-10-02 09:12', who: 'anna', prop: 'Version number', prev: '1.1', next: '1.2' },
+            { when: '2026-10-02 09:12', who: 'anna', prop: 'Status', prev: 'In review', next: 'Draft' },
+            { when: '2026-10-01 17:06', who: 'jonas', prop: 'Review mark: Acceptance criteria', prev: 'none', next: 'Reviewed' },
+            { when: '2026-10-01 16:40', who: 'marta', prop: 'Review mark: Acceptance criteria', prev: 'none', next: 'Reviewed' },
+            { when: '2026-09-29 10:05', who: 'anna', prop: 'Status', prev: 'Draft', next: 'In review' },
+            { when: '2026-09-28 15:31', who: null, prop: 'Scan: Calibration certificate template.pdf', prev: 'Quarantined', next: 'Released' },
+            { when: '2026-09-26 11:02', who: 'anna', prop: 'Recipients', prev: 'Laboratory staff', next: 'Laboratory staff, QA team' },
+            { when: '2026-09-24 09:00', who: 'anna', prop: 'Version', prev: '1.0 effective', next: '1.1 draft opened' },
+          ],
+        };
+
+        const wi7a = cfile('Instruction', [
+          ['Daily cleaning', 1],
+          ['Wipe the pipette body with 70% ethanol at the end of each shift.'],
+          ['Do not immerse the pipette in liquid.'],
+        ]);
+        const wi7b = cfile('Safety notes', [['Wear gloves and eye protection while handling ethanol.']]);
+        wi7a.comments = [
+          { id: uid('c'), who: 'marta', when: '2026-10-03 10:20', pid: wi7a.paras[1].id, text: 'Which ethanol grade? The store has two.', replies: [] },
+        ];
+        const wi7 = {
+          id: 'WI-7',
+          title: 'Pipette cleaning',
+          type: 'Work Instruction',
+          owner: 'anna',
+          updated: '2026-10-03 10:20',
+          versions: [
+            ver('0.1', 'In review', {
+              files: [wi7a, wi7b],
+              contributors: ['piotr'],
+              reviewers: ['marta', 'jonas'],
+              approvers: ['ewa'],
+              recipients: ['g:lab'],
+              marks: { [wi7b.id]: ['marta'] },
+            }),
+          ],
+          activity: [
+            { when: '2026-10-03 10:25', who: 'marta', prop: 'Review mark: Safety notes', prev: 'none', next: 'Reviewed' },
+            { when: '2026-10-02 14:00', who: 'anna', prop: 'Status', prev: 'Draft', next: 'In review' },
+            { when: '2026-10-01 09:30', who: 'anna', prop: 'Reviewers', prev: 'none', next: 'Marta Lis, Jonas Weber' },
+          ],
+        };
+
+        const pol3a = cfile('Policy', [
+          ['Principle', 1],
+          ['Every record is attributable, legible, contemporaneous, original and accurate.'],
+          ['Corrections keep the original entry readable and name who made the change and why.'],
+        ]);
+        const pol3b = cfile('Responsibilities', [['Each employee is responsible for the records they create.']]);
+        const pol3c = pdf('ALCOA poster.pdf', '640 kB');
+        const pol3 = {
+          id: 'POL-3',
+          title: 'Data integrity policy',
+          type: 'Policy',
+          owner: 'piotr',
+          updated: '2026-10-04 08:50',
+          versions: [
+            ver('1.0', 'Effective', { files: [cfile('Policy', [['Principle', 1], ['Every record is attributable, legible and accurate.']])], effective: '2025-11-15', public: true, approvers: ['ewa'], recipients: ['g:lab', 'g:prod'], qacks: { total: 46, signed: 45 } }),
+            ver('1.1', 'In approval', {
+              files: [pol3a, pol3b, pol3c],
+              reviewers: ['marta'],
+              approvers: ['anna', 'ewa'],
+              public: true,
+              recipients: ['g:lab', 'g:prod'],
+              marks: { [pol3a.id]: ['marta'], [pol3b.id]: ['marta'], [pol3c.id]: ['marta'] },
+              approvals: { [pol3a.id]: [{ who: 'ewa', when: '2026-10-04 08:50' }] },
+              reviewsDone: true,
+            }),
+          ],
+          activity: [
+            { when: '2026-10-04 08:50', who: 'ewa', prop: 'Approval: Policy', prev: 'none', next: 'Approved, signed' },
+            { when: '2026-10-03 16:15', who: 'piotr', prop: 'Status', prev: 'In review', next: 'In approval' },
+          ],
+        };
+
+        const sop9f = cfile('Procedure', [['Reporting', 1], ['A deviation is reported on the day it is found.'], ['The area supervisor classifies it as minor, major or critical within two working days.']]);
+        const sop9 = {
+          id: 'SOP-9',
+          title: 'Deviation handling',
+          type: 'SOP',
+          owner: 'anna',
+          updated: '2026-10-02 12:00',
+          versions: [
+            ver('1.0', 'Effective', { files: [cfile('Procedure', [['Reporting', 1], ['A deviation is reported within three days.']])], effective: '2025-06-01', approvers: ['ewa'], recipients: ['g:prod'], qacks: { total: 32, signed: 32 } }),
+            ver('2.0', 'Approved', {
+              files: [sop9f],
+              reviewers: ['jonas'],
+              approvers: ['jonas', 'ewa'],
+              recipients: ['g:prod', 'g:qa'],
+              marks: { [sop9f.id]: ['jonas'] },
+              approvals: { [sop9f.id]: [{ who: 'jonas', when: '2026-10-01 15:20' }, { who: 'ewa', when: '2026-10-02 12:00' }] },
+              reviewsDone: true,
+            }),
+          ],
+          activity: [
+            { when: '2026-10-02 12:00', who: null, prop: 'Version number', prev: '1.3', next: '2.0' },
+            { when: '2026-10-02 12:00', who: null, prop: 'Status', prev: 'In approval', next: 'Approved' },
+            { when: '2026-10-02 12:00', who: 'ewa', prop: 'Approval: Procedure', prev: 'none', next: 'Approved, signed' },
+          ],
+        };
+
+        const sop4 = {
+          id: 'SOP-4',
+          title: 'Sample labelling',
+          type: 'SOP',
+          owner: 'anna',
+          updated: '2026-06-01 00:00',
+          versions: [
+            ver('1.0', 'Effective', {
+              files: [cfile('Procedure', [['Label content', 1], ['Each sample label carries the sample ID, the date and the initials of the person who took it.']]), pdf('Label template.pdf', '88 kB')],
+              contributors: ['marta'],
+              approvers: ['ewa'],
+              recipients: ['g:lab', 'u:piotr'],
+              effective: '2026-06-01',
+              qacks: { total: 15, signed: 13 },
+              quiz: {
+                on: true,
+                questions: [
+                  { q: 'What does every sample label carry?', options: ['Only the sample ID', 'The sample ID, the date and the initials of the person who took it', 'The sample ID and the room number'], correct: 1 },
+                  { q: 'Whose initials go on the label?', options: ['The person who took the sample', 'The supervisor on shift'], correct: 0 },
+                ],
+              },
+            }),
+          ],
+          activity: [
+            { when: '2026-06-01 00:00', who: null, prop: 'Status', prev: 'Published', next: 'Effective' },
+            { when: '2026-05-12 10:10', who: 'ewa', prop: 'Effective date', prev: 'none', next: '2026-06-01' },
+          ],
+        };
+
+        const wi5f = cfile('Instruction', [['Storage', 1], ['Glassware is stored upside down on the drying rack.'], ['Chipped glassware is thrown away.']]);
+        const wi5 = {
+          id: 'WI-5',
+          title: 'Glassware handling',
+          type: 'Work Instruction',
+          owner: 'anna',
+          updated: '2026-10-04 11:30',
+          versions: [
+            ver('0.2', 'Draft', {
+              files: [wi5f],
+              approvers: ['ewa'],
+              recipients: ['g:lab'],
+              declined: { who: 'ewa', when: '2026-10-04 11:30', comment: 'Say where chipped glassware goes: the sharps container, not general waste.' },
+            }),
+          ],
+          activity: [
+            { when: '2026-10-04 11:30', who: 'ewa', prop: 'Status', prev: 'In approval', next: 'Draft (declined, signed)' },
+            { when: '2026-10-03 09:00', who: 'anna', prop: 'Status', prev: 'Draft', next: 'In approval' },
+          ],
+        };
+
+        const wi2f = cfile('Instruction', [['Before first use each day', 1], ['Place the 100 g check weight on the pan and record the reading.'], ['If the reading is outside 99.9995 g to 100.0005 g, stop and tell the supervisor.']]);
+        const wi2 = {
+          id: 'WI-2',
+          title: 'Daily balance check',
+          type: 'Work Instruction',
+          owner: 'marta',
+          updated: '2026-10-03 15:45',
+          versions: [ver('0.1', 'In review', { files: [wi2f], reviewers: ['anna', 'jonas'], approvers: ['ewa'], recipients: ['g:lab'] })],
+          activity: [{ when: '2026-10-03 15:45', who: 'marta', prop: 'Status', prev: 'Draft', next: 'In review' }],
+        };
+
+        const wi3f = cfile('Instruction', [
+          ['Twice a day', 1],
+          ['Read the fridge thermometer at the start and at the end of each shift and write the value in the log.'],
+          ['If the value is outside 2 °C to 8 °C, move the samples to the backup fridge and tell the supervisor.'],
+        ]);
+        const wi3 = {
+          id: 'WI-3',
+          title: 'Fridge temperature log',
+          type: 'Work Instruction',
+          owner: 'marta',
+          updated: '2026-10-01 09:30',
+          versions: [
+            ver('1.0', 'Published', {
+              files: [wi3f],
+              reviewers: ['jonas'],
+              approvers: ['ewa'],
+              recipients: ['g:lab', 'g:prod'],
+              marks: { [wi3f.id]: ['jonas'] },
+              approvals: { [wi3f.id]: [{ who: 'ewa', when: '2026-09-30 16:00' }] },
+              reviewsDone: true,
+              effective: '2026-10-20',
+              qacks: { total: 46, signed: 9 },
+            }),
+          ],
+          activity: [
+            { when: '2026-10-01 09:30', who: 'ewa', prop: 'Status', prev: 'Approved', next: 'Published' },
+            { when: '2026-10-01 09:30', who: 'ewa', prop: 'Effective date', prev: 'none', next: '2026-10-20' },
+          ],
+        };
+        const qack = (id, user, qid, vno, o = {}) => ({ id, user, qid, vno, status: 'to sign', read: {}, quizPassed: false, attempts: 0, signedAt: null, ...o });
+
+        return {
+          me: 'anna',
+          filter: 'all',
+          next: { POL: 4, SOP: 12, WI: 8 },
+          qdocs: [sop11, wi7, wi5, sop9, sop4, wi3, pol3, wi2],
+          // One QACK is one person's obligation to learn one published version; a signed one is the training record.
+          qacks: [
+            qack('k-sop11-lena', 'lena', 'SOP-11', '1.0'),
+            qack('k-sop4-lena', 'lena', 'SOP-4', '1.0'),
+            qack('k-pol3-lena', 'lena', 'POL-3', '1.0'),
+            qack('k-wi3-lena', 'lena', 'WI-3', '1.0'),
+            qack('k-wi3-tom', 'tom', 'WI-3', '1.0'),
+            qack('k-pol3-tom', 'tom', 'POL-3', '1.0', { status: 'signed', signedAt: '2025-11-10 14:02' }),
+            qack('k-sop9-tom', 'tom', 'SOP-9', '1.0', { status: 'signed', signedAt: '2025-05-27 08:15' }),
+            qack('k-sop4-piotr', 'piotr', 'SOP-4', '1.0', { status: 'signed', signedAt: '2026-05-25 10:30', quizPassed: true, attempts: 2 }),
+          ],
+          audit: [
+            ['2026-10-01 09:30', 'Ewa Maj', 'Version published (signed)', 'WI-3 version 1.0'],
+            ['2026-10-01 09:30', 'System', 'QACK assigned', 'WI-3 version 1.0, 46 recipients'],
+            ['2026-09-02 08:00', 'System', 'QACK assigned', 'SOP-11 version 1.0, Lena Vogel'],
+            ['2026-09-02 08:00', 'System', 'QACK assigned', 'POL-3 version 1.0, Lena Vogel'],
+            ['2026-05-25 10:30', 'Piotr Nowak', 'QACK signed', 'SOP-4 version 1.0'],
+            ['2026-05-25 10:29', 'Piotr Nowak', 'Quiz passed', 'SOP-4 version 1.0'],
+            ['2026-05-25 10:26', 'Piotr Nowak', 'Quiz attempt failed', 'SOP-4 version 1.0'],
+            ['2026-10-04 11:30', 'Ewa Maj', 'Version declined (signed)', 'WI-5 version 0.2'],
+            ['2026-10-04 08:50', 'Ewa Maj', 'File approved (signed)', 'POL-3 version 1.1, Policy'],
+            ['2026-10-03 16:15', 'Piotr Nowak', 'Version sent for approval', 'POL-3 version 1.1'],
+            ['2026-10-03 15:45', 'Marta Lis', 'Version sent for review', 'WI-2 version 0.1'],
+            ['2026-10-03 10:25', 'Marta Lis', 'File marked as reviewed', 'WI-7 version 0.1, Safety notes'],
+            ['2026-10-03 09:00', 'Anna Kowalska', 'Version sent for approval', 'WI-5 version 0.2'],
+            ['2026-10-02 14:00', 'Anna Kowalska', 'Version sent for review', 'WI-7 version 0.1'],
+            ['2026-10-02 12:00', 'System', 'Version approved', 'SOP-9 version 2.0'],
+            ['2026-10-02 12:00', 'Ewa Maj', 'File approved (signed)', 'SOP-9 version 1.3, Procedure'],
+            ['2026-10-02 09:12', 'Anna Kowalska', 'Version reverted to draft', 'SOP-11 version 1.1'],
+            ['2026-10-01 17:06', 'Jonas Weber', 'File marked as reviewed', 'SOP-11 version 1.1, Acceptance criteria'],
+            ['2026-10-01 16:40', 'Marta Lis', 'File marked as reviewed', 'SOP-11 version 1.1, Acceptance criteria'],
+            ['2026-10-01 15:20', 'Jonas Weber', 'File approved (signed)', 'SOP-9 version 1.3, Procedure'],
+            ['2026-09-29 10:05', 'Anna Kowalska', 'Version sent for review', 'SOP-11 version 1.1'],
+            ['2026-09-28 15:31', 'System', 'Attachment released', 'SOP-11 version 1.1, Calibration certificate template.pdf'],
+            ['2026-09-28 15:29', 'Anna Kowalska', 'Attachment uploaded', 'SOP-11 version 1.1, Calibration certificate template.pdf'],
+            ['2026-09-24 09:00', 'Anna Kowalska', 'Draft version opened', 'SOP-11 version 1.1'],
+            ['2026-09-02 08:00', 'System', 'QACK assigned', 'SOP-4 version 1.0, Lena Vogel'],
+            ['2026-09-02 08:00', 'Ewa Maj', 'User added to group', 'Lena Vogel, Laboratory staff'],
+            ['2026-06-03 09:14', 'Karl Dietz', 'QACK signed', 'SOP-4 version 1.0'],
+            ['2026-06-01 00:00', 'System', 'QACK overdue', 'SOP-4 version 1.0, Ida Holm'],
+            ['2026-06-01 00:00', 'System', 'Version became effective', 'SOP-4 version 1.0'],
+            ['2026-05-28 13:41', 'Nina Roth', 'QACK signed', 'SOP-4 version 1.0'],
+            ['2026-05-28 13:40', 'Nina Roth', 'Quiz passed', 'SOP-4 version 1.0'],
+            ['2026-05-12 10:10', 'System', 'QACK assigned', 'SOP-4 version 1.0, 15 recipients'],
+            ['2026-05-12 10:10', 'Ewa Maj', 'Version published (signed)', 'SOP-4 version 1.0'],
+          ]
+            .map(([when, actor, action, record]) => ({ when, actor, action, record }))
+            .sort((a, b) => b.when.localeCompare(a.when)),
+          notes: [
+            { to: 'lena', when: '2026-10-01 09:30', text: 'QACK assigned: WI-3 Fridge temperature log version 1.0, due on 2026-10-20.', href: '#/qack/k-wi3-lena' },
+            { to: 'lena', when: '2026-09-03 00:00', text: 'QACK overdue: SOP-4 Sample labelling version 1.0. You can still sign it.', href: '#/qack/k-sop4-lena' },
+            { to: 'lena', when: '2026-09-02 08:00', text: 'You joined Laboratory staff. QACKs assigned: SOP-11, SOP-4, POL-3.', href: '#/training' },
+            { to: 'tom', when: '2026-10-01 09:30', text: 'QACK assigned: WI-3 Fridge temperature log version 1.0, due on 2026-10-20.', href: '#/qack/k-wi3-tom' },
+            { to: 'ewa', when: '2026-10-03 16:15', text: 'POL-3 Data integrity policy was sent for approval. You are an approver.', href: '#/qdoc/POL-3' },
+            { to: 'ewa', when: '2026-10-02 12:00', text: 'SOP-9 Deviation handling was approved as version 2.0 and waits for publication.', href: '#/qdoc/SOP-9' },
+            { to: 'anna', when: '2026-10-04 11:30', text: 'WI-5 Glassware handling was declined by Ewa Maj.', href: '#/qdoc/WI-5' },
+            { to: 'anna', when: '2026-10-03 16:15', text: 'POL-3 Data integrity policy was sent for approval. You are an approver.', href: '#/qdoc/POL-3' },
+            { to: 'anna', when: '2026-10-03 15:45', text: 'WI-2 Daily balance check was sent for review. You are a reviewer.', href: '#/qdoc/WI-2' },
+            { to: 'anna', when: '2026-10-02 12:00', text: 'SOP-9 Deviation handling was approved as version 2.0.', href: '#/qdoc/SOP-9' },
+            { to: 'piotr', when: '2026-09-24 09:05', text: 'Anna Kowalska invited you as a contributor to SOP-11 Equipment calibration.', href: '#/qdoc/SOP-11' },
+            { to: 'marta', when: '2026-10-02 14:00', text: 'WI-7 Pipette cleaning was sent for review. You are a reviewer.', href: '#/qdoc/WI-7' },
+            { to: 'jonas', when: '2026-10-03 15:45', text: 'WI-2 Daily balance check was sent for review. You are a reviewer.', href: '#/qdoc/WI-2' },
+            { to: 'jonas', when: '2026-10-02 14:00', text: 'WI-7 Pipette cleaning was sent for review. You are a reviewer.', href: '#/qdoc/WI-7' },
+          ],
+          ui: { panel: 'threads', composer: null, focus: null, cmp: null, audit: { actor: '', action: '', q: '' }, lib: { q: '', type: '' }, quiz: null },
+        };
+      }
+      let S = seed();
+
+      // ---------- Helpers ----------
+      const $ = (s) => document.querySelector(s);
+      const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+      const pad = (n) => String(n).padStart(2, '0');
+      const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const stamp = () => {
+        const d = new Date();
+        return `${ymd(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      };
+      const name = (u) => (u ? U[u].name : 'System');
+      const names = (list) => (list.length ? list.map(name).join(', ') : 'none');
+      const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+      const pill = (s) => `<span class="pill s-${s.toLowerCase().replace(/\s/g, '-')}">${esc(s)}</span>`;
+      const rcp = (id) => (id.startsWith('g:') ? `${G[id.slice(2)].name} (${G[id.slice(2)].size})` : U[id.slice(2)].name);
+      const rcpCount = (v) => v.recipients.reduce((n, id) => n + (id.startsWith('g:') ? G[id.slice(2)].size : 1), 0);
+      const cur = (q) => q.versions[q.versions.length - 1];
+      const effectiveOf = (q) => q.versions.find((v) => v.status === 'Effective');
+      const find = (id) => S.qdocs.find((q) => q.id === id);
+      const isQM = (u) => U[u].level === 'Quality manager';
+      const isEmp = (u) => U[u].level === 'Employee';
+      const today = () => ymd(new Date());
+      const isRecipient = (v, u) => v.recipients.some((id) => (id.startsWith('g:') ? G[id.slice(2)].members.includes(u) : id.slice(2) === u));
+      // The library shows a user the effective versions they are a recipient of and the public ones. Authors follow
+      // the same rule; a role on the QDoc opens the QDocs workspace, not the library. Quality managers see them all.
+      function libAccess(q, u) {
+        const e = !q.retired && effectiveOf(q);
+        if (!e) return null;
+        return isRecipient(e, u) ? 'Assigned' : e.public ? 'Public' : isQM(u) ? 'Quality manager' : null;
+      }
+      const versionOf = (k) => find(k.qid)?.versions.find((v) => v.no === k.vno);
+      // Due on the effective date, overdue after it, and still signable. An unsigned QACK closes when its version leaves force.
+      function qackState(k) {
+        if (k.status === 'signed') return 'signed';
+        const q = find(k.qid);
+        const v = versionOf(k);
+        if (!v || q.retired || !['Published', 'Effective'].includes(v.status)) return 'closed';
+        return v.effective < today() ? 'overdue' : 'to sign';
+      }
+      const qackPill = (st) => `<span class="pill ${{ signed: 'g', overdue: 'r', 'to sign': 'b', closed: '' }[st]}">${{ signed: 'Signed', overdue: 'Overdue', 'to sign': 'To sign', closed: 'Closed' }[st]}</span>`;
+      const trainMode = (v) => (v.quiz.on && v.quiz.questions.length ? 'Read, pass the quiz and sign' : 'Read and sign');
+      const fileBody = (f) =>
+        f.kind === 'pdf'
+          ? `<p class="dim">PDF attachment, ${f.size}. <button class="btn sm" data-act="dl" data-n="${esc(f.name)}">Download</button></p>`
+          : f.paras.map((x) => `<div class="para ${x.h ? 'h' : ''}"><div class="ptext">${esc(x.text)}</div></div>`).join('');
+      const openSuggestions = (v) => v.files.reduce((n, f) => n + (f.kind === 'content' ? f.suggestions.filter((s) => s.status === 'open').length : 0), 0);
+      const marked = (v, f, u) => (v.marks[f.id] || []).includes(u);
+      const approved = (v, f, u) => (v.approvals[f.id] || []).some((a) => a.who === u);
+
+      function roles(q, v, u) {
+        return {
+          owner: q.owner === u,
+          contributor: v.contributors.includes(u),
+          reviewer: v.reviewers.includes(u),
+          approver: v.approvers.includes(u),
+          qm: isQM(u),
+          retired: !!q.retired,
+        };
+      }
+      function roleNames(r) {
+        return ['owner', 'contributor', 'reviewer', 'approver'].filter((k) => r[k]).concat(r.qm ? ['quality manager'] : []);
+      }
+      // A draft is visible only to its contributors and the quality managers; reviewers and approvers see the version once it reaches them.
+      function visible(q, u) {
+        const v = cur(q);
+        const r = roles(q, v, u);
+        if (r.owner || r.contributor || r.qm) return true;
+        if (r.reviewer && v.status !== 'Draft') return true;
+        return r.approver && !['Draft', 'In review'].includes(v.status);
+      }
+      // A quality manager does on every QDoc what its owner and contributors do. Nothing changes on a retired QDoc.
+      function perms(v, r) {
+        const d = !r.retired && v.status === 'Draft';
+        const rv = !r.retired && v.status === 'In review';
+        const lead = r.owner || r.qm;
+        const writer = lead || r.contributor;
+        return {
+          lead,
+          edit: d && writer,
+          manage: d && lead,
+          comment: (d && writer) || (rv && (lead || r.reviewer)),
+          resolve: d && lead,
+          mark: rv && r.reviewer,
+          approve: !r.retired && v.status === 'In approval' && r.approver,
+        };
+      }
+      function readiness(v) {
+        const open = openSuggestions(v);
+        return [
+          { ok: open === 0, text: open ? `${plural(open, 'suggestion')} still open` : 'Every suggestion accepted or discarded' },
+          { ok: v.approvers.length > 0, text: 'At least one approver named' },
+          { ok: v.approvers.some(isQM), text: 'A quality manager among the approvers' },
+          { ok: v.files.every((f) => f.kind !== 'pdf' || f.scan === 'released'), text: 'Every attachment released by the scan' },
+        ];
+      }
+      function log(q, who, prop, prev, next) {
+        q.activity.unshift({ when: stamp(), who, prop, prev, next });
+        q.updated = stamp();
+      }
+      function notify(to, text, href) {
+        [].concat(to).forEach((u) => S.notes.unshift({ to: u, when: stamp(), text, href }));
+      }
+      // System-wide, action-level and append-only: actor, action, record, time.
+      function audit(who, action, record) {
+        S.audit.unshift({ when: stamp(), actor: name(who), action, record });
+      }
+      const rec = (q, v, extra) => `${q.id} version ${v.no}${extra ? `, ${extra}` : ''}`;
+      let toastTimer;
+      function toast(msg) {
+        const t = $('#toast');
+        t.textContent = msg;
+        t.hidden = false;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => (t.hidden = true), 4500);
+      }
+
+      // Word-level difference, used for suggestions and for version comparison.
+      function diff(a, b) {
+        const x = a.split(' ');
+        const y = b.split(' ');
+        const t = Array.from({ length: x.length + 1 }, () => new Uint16Array(y.length + 1));
+        for (let i = x.length - 1; i >= 0; i--)
+          for (let j = y.length - 1; j >= 0; j--) t[i][j] = x[i] === y[j] ? t[i + 1][j + 1] + 1 : Math.max(t[i + 1][j], t[i][j + 1]);
+        const out = [];
+        const push = (k, w) => {
+          const last = out[out.length - 1];
+          if (last && last.k === k) last.w.push(w);
+          else out.push({ k, w: [w] });
+        };
+        let i = 0;
+        let j = 0;
+        while (i < x.length && j < y.length) {
+          if (x[i] === y[j]) push('eq', x[i++]), j++;
+          else if (t[i + 1][j] >= t[i][j + 1]) push('del', x[i++]);
+          else push('ins', y[j++]);
+        }
+        while (i < x.length) push('del', x[i++]);
+        while (j < y.length) push('ins', y[j++]);
+        return out;
+      }
+      function diffHtml(a, b) {
+        return diff(a, b)
+          .map((s) => {
+            const h = esc(s.w.join(' ')).replaceAll('¶', '<span class="pbreak"></span>');
+            return s.k === 'eq' ? h : `<${s.k}>${h}</${s.k}>`;
+          })
+          .join(' ');
+      }
+
+      // ---------- Lifecycle ----------
+      const bumpMinor = (no) => `${no.split('.')[0]}.${+no.split('.')[1] + 1}`;
+      const nextMajor = (no) => `${+no.split('.')[0] + 1}.0`;
+
+      // A changed file loses its review marks and approvals; the other files keep theirs.
+      function touch(q, v, f, what) {
+        f.history.unshift({ who: S.me, when: stamp(), what });
+        q.updated = stamp();
+        const had = (v.marks[f.id] || []).length + (v.approvals[f.id] || []).length;
+        if (had) {
+          delete v.marks[f.id];
+          delete v.approvals[f.id];
+          log(q, S.me, `Review marks and approvals: ${f.name}`, 'kept', 'dropped, file changed');
+          toast(`${f.name} changed: its review marks and approvals were dropped.`);
+        }
+      }
+      function checkReviews(q, v) {
+        if (v.reviewsDone || !v.reviewers.length) return;
+        if (v.reviewers.every((u) => v.files.every((f) => marked(v, f, u)))) {
+          v.reviewsDone = true;
+          notify(q.owner, `Reviews complete on ${q.id} ${q.title}: every reviewer marked every file.`, `#/qdoc/${q.id}`);
+        }
+      }
+      function checkApproved(q, v) {
+        if (!v.approvers.every((u) => v.files.every((f) => approved(v, f, u)))) return;
+        const prev = v.no;
+        v.status = 'Approved';
+        v.no = nextMajor(prev);
+        log(q, null, 'Status', 'In approval', 'Approved');
+        log(q, null, 'Version number', prev, v.no);
+        audit(null, 'Version approved', rec(q, v));
+        notify(q.owner, `${q.id} ${q.title} was approved as version ${v.no}.`, `#/qdoc/${q.id}`);
+        notify(Object.keys(U).filter((u) => isQM(u) && u !== q.owner), `${q.id} ${q.title} was approved as version ${v.no} and waits for publication.`, `#/qdoc/${q.id}`);
+        toast(`Every approver approved every file. ${q.id} is approved as version ${v.no}.`);
+      }
+      function markReviewed(q, v, f, u) {
+        (v.marks[f.id] ||= []).push(u);
+        log(q, u, `Review mark: ${f.name}`, 'none', 'Reviewed');
+        audit(u, 'File marked as reviewed', rec(q, v, f.name));
+        checkReviews(q, v);
+      }
+      function approveFile(q, v, f, u) {
+        (v.approvals[f.id] ||= []).push({ who: u, when: stamp() });
+        log(q, u, `Approval: ${f.name}`, 'none', 'Approved, signed');
+        audit(u, 'File approved (signed)', rec(q, v, f.name));
+      }
+      // Earlier signers get a QACK only when the owner decided they train again.
+      function qackCount(q, v) {
+        const prev = effectiveOf(q);
+        const skip = prev && prev !== v && !v.retrain ? (prev.qacks?.signed ?? 0) : 0;
+        return { total: Math.max(0, rcpCount(v) - skip), skip };
+      }
+      // Each named user, directly or through a group, gets a QACK; earlier signers only if they train again.
+      function assignQacks(q, v) {
+        const prev = effectiveOf(q);
+        const users = new Set();
+        v.recipients.forEach((id) => (id.startsWith('g:') ? G[id.slice(2)].members.forEach((u) => users.add(u)) : users.add(id.slice(2))));
+        users.forEach((u) => {
+          const signedPrev = prev && prev !== v && S.qacks.some((k) => k.user === u && k.qid === q.id && k.vno === prev.no && k.status === 'signed');
+          if (signedPrev && !v.retrain) return;
+          const k = { id: uid('k'), user: u, qid: q.id, vno: v.no, status: 'to sign', read: {}, quizPassed: false, attempts: 0, signedAt: null };
+          S.qacks.push(k);
+          notify(u, `QACK assigned: ${q.id} ${q.title} version ${v.no}, due on ${v.effective}.`, `#/qack/${k.id}`);
+        });
+      }
+      function publish(q, v, who, date) {
+        v.status = 'Published';
+        v.effective = date;
+        v.qacks = { total: qackCount(q, v).total, signed: 0 };
+        log(q, who, 'Effective date', 'none', date);
+        log(q, who, 'Status', 'Approved', 'Published');
+        audit(who, 'Version published (signed)', rec(q, v));
+        audit(null, 'QACK assigned', rec(q, v, plural(v.qacks.total, 'recipient')));
+        notify(q.owner, `${q.id} ${q.title} version ${v.no} was published; effective on ${date}.`, `#/qdoc/${q.id}`);
+        assignQacks(q, v);
+        if (date <= ymd(new Date())) makeEffective(q, v);
+      }
+      function makeEffective(q, v) {
+        const prev = effectiveOf(q);
+        if (prev) prev.status = 'Archived';
+        v.status = 'Effective';
+        log(q, null, 'Status', 'Published', 'Effective');
+        audit(null, 'Version became effective', rec(q, v));
+        if (prev) {
+          log(q, null, `Version ${prev.no}`, 'Effective', 'Archived');
+          audit(null, 'Version archived', rec(q, prev));
+        }
+        notify(q.owner, `${q.id} ${q.title} version ${v.no} is now effective.`, `#/qdoc/${q.id}`);
+        notify([...new Set(S.qacks.filter((k) => k.qid === q.id && k.vno === v.no && k.user !== q.owner).map((k) => k.user))], `${q.id} ${q.title} version ${v.no} is now effective.`, `#/library/${q.id}`);
+      }
+
+      // ---------- Dialogs ----------
+      const dlg = $('#dlg');
+      function openDlg(html, onOk) {
+        dlg.innerHTML = `<form method="dialog">${html}</form>`;
+        dlg.onOk = onOk;
+        dlg.showModal();
+      }
+      const dlgActs = (ok, cls = 'primary', disabled = false) =>
+        `<div class="acts"><button class="btn" value="cancel" formnovalidate>Cancel</button><button class="btn ${cls}" value="ok" ${disabled ? 'disabled' : ''}>${ok}</button></div>`;
+      dlg.addEventListener('submit', (e) => {
+        if (e.submitter?.value !== 'ok') return;
+        const res = dlg.onOk?.(Object.fromEntries(new FormData(e.target)));
+        if (typeof res === 'string') {
+          e.preventDefault();
+          let err = dlg.querySelector('.err');
+          if (!err) dlg.querySelector('.acts').insertAdjacentHTML('beforebegin', '<p class="err" role="alert"></p>'), (err = dlg.querySelector('.err'));
+          err.textContent = res;
+          return;
+        }
+        render();
+      });
+      function confirmDlg(title, body, ok, fn, cls) {
+        openDlg(`<h2>${esc(title)}</h2>${body}${dlgActs(ok, cls)}`, fn);
+      }
+      // Electronic signature: identity plus password re-entered for the action, with its meaning and time.
+      function sign(meaning, fn, extra = '') {
+        openDlg(
+          `<h2>Electronic signature</h2><p>${esc(meaning)}</p>${extra}
+           <dl><dt>Signing as</dt><dd>${esc(name(S.me))}</dd><dt>Time</dt><dd>${stamp()}</dd></dl>
+           <label class="field">Password<input type="password" name="pw" required autocomplete="off" /></label>
+           <p class="hint">Prototype: any password is accepted.</p>${dlgActs('Sign')}`,
+          fn,
+        );
+      }
+
+      // ---------- Screens ----------
+      function tasks(u) {
+        const out = [];
+        for (const k of S.qacks.filter((x) => x.user === u)) {
+          const st = qackState(k);
+          if (st !== 'to sign' && st !== 'overdue') continue;
+          const q = find(k.qid);
+          const v = versionOf(k);
+          out.push({ kind: st === 'overdue' ? 'QACK overdue' : 'QACK', cls: st === 'overdue' ? 'r' : 'b', label: `${q.id} ${q.title}`, detail: `Version ${v.no}: ${trainMode(v).toLowerCase()}. Due on ${v.effective}.`, href: `#/qack/${k.id}`, cta: 'Train' });
+        }
+        for (const q of S.qdocs) {
+          const v = cur(q);
+          const r = roles(q, v, u);
+          const href = `#/qdoc/${q.id}`;
+          const label = `${q.id} ${q.title}`;
+          if (q.retired) continue;
+          if (r.qm && v.status === 'Approved')
+            out.push({ kind: 'Publish', cls: 'b', label, detail: `Version ${v.no} is approved and waits for an effective date`, href, cta: 'Publish' });
+          if (r.reviewer && v.status === 'In review') {
+            const left = v.files.filter((f) => !marked(v, f, u)).length;
+            if (left) out.push({ kind: 'Review', cls: 'v', label, detail: `${left} of ${plural(v.files.length, 'file')} left to mark as reviewed`, href, cta: 'Review' });
+          }
+          if (r.approver && v.status === 'In approval') {
+            const left = v.files.filter((f) => !approved(v, f, u)).length;
+            if (left) out.push({ kind: 'Approve', cls: 'y', label, detail: `${left} of ${plural(v.files.length, 'file')} left to approve`, href, cta: 'Approve' });
+          }
+          if (r.owner && v.status === 'Draft' && v.declined)
+            out.push({ kind: 'Declined', cls: 'r', label, detail: `${name(v.declined.who)}: ${v.declined.comment}`, href, cta: 'Open' });
+          else if (r.owner && v.status === 'Draft' && openSuggestions(v))
+            out.push({ kind: 'Resolve', cls: '', label, detail: `${plural(openSuggestions(v), 'suggestion')} to accept or discard`, href, cta: 'Open' });
+          if (r.owner && v.status === 'In review' && v.reviewsDone)
+            out.push({ kind: 'Reviews complete', cls: 'g', label, detail: openSuggestions(v) ? 'Revert to draft to resolve the suggestions' : 'Send the version for approval', href, cta: 'Open' });
+        }
+        return out;
+      }
+
+      function viewWork() {
+        const t = tasks(S.me);
+        const notes = S.notes.filter((n) => n.to === S.me);
+        return `<div class="head"><div><h1>My work</h1><p class="dim">Assigned work and messages for ${esc(name(S.me))}. Each message is also sent by e-mail.</p></div></div>
+          <section><h2>To do</h2><div class="rows">${
+            t.map((x) => `<div class="task"><div><span class="pill ${x.cls}">${x.kind}</span> <span class="t">${esc(x.label)}</span><div class="dim small">${esc(x.detail)}</div></div><a class="btn sm" href="${x.href}">${x.cta}</a></div>`).join('') ||
+            '<div class="card empty">Nothing waits for you.</div>'
+          }</div></section>
+          <section><h2>Notifications</h2><div class="card">${
+            notes.map((n) => `<div class="note"><time>${n.when}</time><span>${esc(n.text)} <a href="${n.href}">Open</a></span></div>`).join('') || '<p class="dim">No messages.</p>'
+          }</div></section>`;
+      }
+
+      function viewList() {
+        const qm = isQM(S.me);
+        const filters = qm
+          ? [['all', 'All'], ['Approved', 'Awaiting publication'], ['Published', 'Published'], ['Effective', 'Effective'], ['retired', 'Retired'], ['approver', 'I approve']]
+          : [['all', 'All'], ['owner', 'I own'], ['contributor', 'I contribute'], ['reviewer', 'To review'], ['approver', 'To approve']];
+        const match = ({ q, v, r }) => S.filter === 'all' || (S.filter === 'retired' ? !!q.retired : STEPS.includes(S.filter) ? !q.retired && v.status === S.filter : r[S.filter]);
+        const rows = S.qdocs
+          .filter((q) => visible(q, S.me))
+          .map((q) => ({ q, v: cur(q), r: roles(q, cur(q), S.me) }))
+          .filter(match);
+        const inForce = (q) => {
+          const e = effectiveOf(q);
+          return e ? `<span class="mono">${e.no}</span> since ${e.effective}` : '<span class="no">none</span>';
+        };
+        return `<div class="head"><div><h1>QDocs</h1><p class="dim">${
+          qm ? 'Every QDoc in the system. You alone publish approved versions and retire QDocs no longer needed.' : 'QDocs you own or work on. A draft is visible only to its contributors and the quality managers.'
+        }</p></div>
+            <div class="acts"><button class="btn primary" data-act="newQdoc">New QDoc</button></div></div>
+          <div class="filters" role="group" aria-label="Filter">${filters.map(([k, l]) => `<button aria-pressed="${S.filter === k}" data-act="filter" data-k="${k}">${l}</button>`).join('')}</div>
+          <div class="scroll"><table><thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Version</th><th>Status</th><th>In force</th><th>My roles</th><th>Owner</th><th>Updated</th></tr></thead><tbody>${
+            rows
+              .map(
+                ({ q, v, r }) => `<tr><td class="mono nw"><a class="strong" href="#/qdoc/${q.id}">${q.id}</a></td><td><a class="strong" href="#/qdoc/${q.id}">${esc(q.title)}</a></td>
+                <td class="nw">${q.type}</td><td class="mono">${v.no}</td><td class="nw">${q.retired ? pill('Retired') : pill(v.status)}${v.declined && !q.retired ? ' <span class="pill r">Declined</span>' : ''}</td>
+                <td class="nw">${inForce(q)}</td><td>${roleNames(r).filter((x) => x !== 'quality manager').join(', ') || '<span class="no">none</span>'}</td><td class="nw">${esc(name(q.owner))}</td><td class="dim small nw">${q.updated}</td></tr>`,
+              )
+              .join('') || '<tr><td colspan="9" class="empty">No QDocs match this filter.</td></tr>'
+          }</tbody></table></div>`;
+      }
+
+      // The library shows only effective versions, to everyone.
+      function libRows() {
+        const f = S.ui.lib;
+        const t = f.q.trim().toLowerCase();
+        return S.qdocs.filter((q) => libAccess(q, S.me) && (!f.type || q.type === f.type) && (!t || `${q.id} ${q.title}`.toLowerCase().includes(t)));
+      }
+      const accessPill = (a) => `<span class="pill ${a === 'Assigned' ? 'b' : a === 'Public' ? 'g' : ''}">${a === 'Assigned' ? 'Assigned to you' : a}</span>`;
+      const libBody = (rows) =>
+        rows
+          .map((q) => {
+            const e = effectiveOf(q);
+            const k = S.qacks.find((x) => x.user === S.me && x.qid === q.id && x.vno === e.no);
+            return `<tr><td class="mono nw"><a class="strong" href="#/library/${q.id}">${q.id}</a></td><td><a class="strong" href="#/library/${q.id}">${esc(q.title)}</a></td><td class="nw">${q.type}</td>
+              <td class="mono">${e.no}</td><td class="nw">${e.effective}</td><td class="nw">${accessPill(libAccess(q, S.me))}</td><td class="nw">${k ? `<a href="#/qack/${k.id}" style="text-decoration:none">${qackPill(qackState(k))}</a>` : '<span class="no">not assigned</span>'}</td></tr>`;
+          })
+          .join('') || '<tr><td colspan="7" class="empty">No effective version matches.</td></tr>';
+      function viewLibrary() {
+        const f = S.ui.lib;
+        return `<div class="head"><div><h1>Library</h1><p class="dim">${
+          isQM(S.me)
+            ? 'Every version in force today. Other users see only the versions assigned to them and the public ones.'
+            : 'The versions in force today that are assigned to you, directly or through a group, and the public ones. Drafts, versions on their way and archived versions are not shown here.'
+        }</p></div></div>
+          <div class="bar"><input class="inp" id="libQ" type="search" placeholder="Search by ID or title" aria-label="Search" value="${esc(f.q)}" /></div>
+          <div class="filters" role="group" aria-label="Document type">${[['', 'All types'], ...Object.keys(TYPES).map((t) => [t, t])].map(([k, l]) => `<button aria-pressed="${f.type === k}" data-act="libType" data-k="${k}">${l}</button>`).join('')}</div>
+          <div class="scroll"><table><thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Version</th><th>In force since</th><th>Access</th><th>My training</th></tr></thead><tbody id="libBody">${libBody(libRows())}</tbody></table></div>`;
+      }
+      function viewLibDoc(id) {
+        const q = find(id);
+        const e = q && !q.retired && effectiveOf(q);
+        if (!e) return `<div class="card empty"><h2>${esc(id)} has no version in force</h2><p>The library shows only effective versions.</p><p style="margin-top:12px"><a class="btn" href="#/library">Back to the library</a></p></div>`;
+        const access = libAccess(q, S.me);
+        if (!access) return `<div class="card empty"><h2>${q.id} is not in your library</h2><p>The library shows you the effective versions assigned to you and the public ones.</p><p style="margin-top:12px"><a class="btn" href="#/library">Back to the library</a></p></div>`;
+        const k = S.qacks.find((x) => x.user === S.me && x.qid === q.id && x.vno === e.no);
+        const st = k && qackState(k);
+        const note = !k
+          ? ''
+          : st === 'signed'
+            ? `<div class="banner green">You signed the QACK for this version on ${k.signedAt}. <a href="#/qack/${k.id}">Training record</a></div>`
+            : `<div class="banner ${st === 'overdue' ? 'red' : ''}">Your QACK for this version is ${st === 'overdue' ? `overdue since ${e.effective}` : `due on ${e.effective}`}. <a href="#/qack/${k.id}">${trainMode(e)}</a></div>`;
+        return `<div class="crumbs"><a href="#/library">Library</a> / ${q.id}</div>
+          <div class="head"><div><h1><span class="mono">${q.id}</span> ${esc(q.title)}</h1>
+            <div class="meta"><span>${q.type}</span><span>version ${e.no}</span>${pill('Effective')}${accessPill(access)}<span>In force since ${e.effective}</span><span>Owner: ${esc(name(q.owner))}</span></div></div>
+            <div class="acts">${!isEmp(S.me) && visible(q, S.me) ? `<a class="btn" href="#/qdoc/${q.id}">Open in QDocs</a>` : ''}</div></div>
+          ${note}
+          <div class="read">${e.files.map((f) => `<div class="card"><div class="head"><h2>${esc(f.name)}</h2></div>${fileBody(f)}</div>`).join('')}</div>`;
+      }
+
+      function viewTraining() {
+        const order = { overdue: 0, 'to sign': 1, signed: 2, closed: 3 };
+        const rows = S.qacks
+          .filter((k) => k.user === S.me)
+          .map((k) => ({ k, st: qackState(k), q: find(k.qid), v: versionOf(k) }))
+          .filter((x) => x.q && x.v)
+          .sort((a, b) => order[a.st] - order[b.st] || a.v.effective.localeCompare(b.v.effective));
+        return `<div class="head"><div><h1>My training</h1><p class="dim">Your QACKs: one for each published version you have to learn. A signed QACK is your training record and is kept when the version is archived.</p></div></div>
+          <div class="scroll"><table><thead><tr><th>ID</th><th>Title</th><th>Version</th><th>Training</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody>${
+            rows
+              .map(
+                ({ k, st, q, v }) => `<tr><td class="mono nw"><a class="strong" href="#/qack/${k.id}">${q.id}</a></td><td><a class="strong" href="#/qack/${k.id}">${esc(q.title)}</a></td><td class="mono">${v.no}</td>
+                <td>${trainMode(v)}</td><td class="nw">${v.effective}</td><td class="nw">${qackPill(st)}${st === 'signed' ? ` <span class="dim small">${k.signedAt}</span>` : ''}</td>
+                <td class="r"><a class="btn sm ${st === 'overdue' || st === 'to sign' ? 'primary' : ''}" href="#/qack/${k.id}">${st === 'signed' ? 'Record' : st === 'closed' ? 'Open' : Object.keys(k.read).length ? 'Continue' : 'Start'}</a></td></tr>`,
+              )
+              .join('') || '<tr><td colspan="7" class="empty">No QACK is assigned to you.</td></tr>'
+          }</tbody></table></div>`;
+      }
+
+      // One QACK: read every file, pass the quiz if the version has one, then sign.
+      function viewQack(id) {
+        const k = S.qacks.find((x) => x.id === id);
+        const back = `<p style="margin-top:12px"><a class="btn" href="#/training">My training</a></p>`;
+        if (!k || !versionOf(k)) return `<div class="card empty"><h2>No such QACK</h2>${back}</div>`;
+        if (k.user !== S.me) return `<div class="card empty"><h2>This QACK belongs to ${esc(name(k.user))}</h2><p>A QACK is one person's obligation; nobody signs it for them.</p>${back}</div>`;
+        const q = find(k.qid);
+        const v = versionOf(k);
+        const st = qackState(k);
+        const open = st === 'to sign' || st === 'overdue';
+        const signed = st === 'signed';
+        const nRead = v.files.filter((f) => k.read[f.id]).length;
+        const allRead = signed || nRead === v.files.length;
+        const hasQuiz = v.quiz.on && v.quiz.questions.length > 0;
+        const quizOk = !hasQuiz || k.quizPassed;
+        const at = signed ? 3 : !allRead ? 0 : !quizOk ? 1 : 2;
+        const steps = [[0, 'Read every file'], ...(hasQuiz ? [[1, 'Pass the quiz']] : []), [2, 'Sign']];
+        const banner = {
+          signed: `<div class="banner green">Signed on ${k.signedAt}. This QACK is your training record for version ${v.no}.</div>`,
+          overdue: `<div class="banner red"><b>Overdue since ${v.effective}.</b> Version ${v.no} is in force. You can still sign this QACK.</div>`,
+          'to sign': `<div class="banner">Due on ${v.effective}, the day version ${v.no} becomes effective. It becomes effective on that date whether or not you have signed.</div>`,
+          closed: `<div class="banner">Closed: version ${v.no} is no longer in force, so there is nothing left to sign.</div>`,
+        }[st];
+        const files = v.files
+          .map(
+            (f) => `<div class="card"><div class="head"><h3>${esc(f.name)}</h3>${signed || k.read[f.id] ? '<span class="pill g">Read</span>' : ''}</div>${fileBody(f)}
+              ${open && !k.read[f.id] ? `<div class="foot"><button class="btn sm primary" data-act="readFile" data-fid="${f.id}">I have read this file</button></div>` : ''}</div>`,
+          )
+          .join('');
+        const z = S.ui.quiz && S.ui.quiz.kid === k.id ? S.ui.quiz : null;
+        const quiz = !hasQuiz
+          ? ''
+          : `<section><h2>Quiz</h2>${
+              k.quizPassed
+                ? `<div class="card"><span class="pill g">Passed</span> <span class="dim">on attempt ${k.attempts}, every answer correct.</span></div>`
+                : !open
+                  ? '<div class="card dim">Not taken.</div>'
+                  : !allRead
+                    ? '<div class="card locked">The quiz opens when you have read every file.</div>'
+                    : `<form class="card" data-form="quiz">
+                        ${z ? `<p class="err" role="alert" style="margin:0 0 12px">Attempt ${k.attempts}: ${v.quiz.questions.length - z.wrong.length} of ${v.quiz.questions.length} correct. The quiz is passed only with every answer correct. Change your answers and try again.</p>` : ''}
+                        ${v.quiz.questions
+                          .map(
+                            (x, i) => `<fieldset class="qz"><legend>${i + 1}. ${esc(x.q)}${z && z.wrong.includes(i) ? ' <span class="pill r">Not correct</span>' : ''}</legend>
+                            ${x.options.map((o, j) => `<label><input type="radio" name="q${i}" value="${j}" required ${z && z.answers[i] === j ? 'checked' : ''} /> ${esc(o)}</label>`).join('')}</fieldset>`,
+                          )
+                          .join('')}
+                        <div class="acts"><button class="btn primary">${k.attempts ? 'Try again' : 'Check answers'}</button><span class="dim small" style="align-self:center">${k.attempts ? plural(k.attempts, 'attempt') + ' so far. ' : ''}You can retake the quiz.</span></div></form>`
+            }</section>`;
+        const left = [!allRead && `${v.files.length - nRead} of ${plural(v.files.length, 'file')} left to read`, allRead && !quizOk && 'the quiz is not passed yet'].filter(Boolean)[0];
+        const signBox = signed
+          ? `<div class="card"><dl style="display:grid;grid-template-columns:auto 1fr;gap:4px 16px;margin:0"><dt class="dim">Signed by</dt><dd style="margin:0"><b>${esc(name(k.user))}</b></dd><dt class="dim">Time</dt><dd style="margin:0">${k.signedAt}</dd>
+              <dt class="dim">Meaning</dt><dd style="margin:0">I have read and understood ${q.id} ${esc(q.title)}, version ${v.no}.</dd><dt class="dim">Training</dt><dd style="margin:0">${hasQuiz ? `Read, quiz passed${k.attempts ? ` on attempt ${k.attempts}` : ''}, signed` : 'Read and signed'}</dd></dl></div>`
+          : !open
+            ? '<div class="card dim">Not signed.</div>'
+            : `<div class="card"><div class="acts" style="align-items:center"><button class="btn primary" data-act="signQack" ${left ? 'disabled' : ''}>Sign QACK</button><span class="dim small">${left ? `Not yet: ${left}.` : 'Signing needs your password again.'}</span></div></div>`;
+        return `<div class="crumbs"><a href="#/training">My training</a> / ${q.id} version ${v.no}</div>
+          <div class="head"><div><h1><span class="mono">${q.id}</span> ${esc(q.title)}</h1>
+            <div class="meta"><span>QACK</span><span>version ${v.no}</span>${qackPill(st)}<span>${trainMode(v)}</span><span>Due ${v.effective}</span></div></div></div>
+          <ol class="steps" aria-label="Training steps">${steps.map(([i, l]) => `<li class="${i < at ? 'done' : i === at && open ? 'now' : ''}" ${i === at && open ? 'aria-current="step"' : ''}>${l}</li>`).join('')}</ol>
+          ${banner}
+          <section><h2>Read${open ? ` <span class="dim small" style="font-weight:400">${nRead} of ${plural(v.files.length, 'file')} read</span>` : ''}</h2><div class="read">${files}</div></section>
+          ${quiz}
+          <section><h2>${signed ? 'Training record' : 'Sign'}</h2>${signBox}</section>`;
+      }
+
+      // Only quality managers read the audit log; nobody edits or deletes an entry.
+      function auditRows() {
+        const f = S.ui.audit;
+        const t = f.q.trim().toLowerCase();
+        return S.audit.filter((a) => (!f.actor || a.actor === f.actor) && (!f.action || a.action === f.action) && (!t || `${a.actor} ${a.action} ${a.record}`.toLowerCase().includes(t)));
+      }
+      const auditBody = (rows) =>
+        rows.map((a) => `<tr><td class="dim small nw">${a.when}</td><td class="nw">${esc(a.actor)}</td><td>${esc(a.action)}</td><td>${esc(a.record)}</td></tr>`).join('') ||
+        '<tr><td colspan="4" class="empty">No entry matches.</td></tr>';
+      const auditCount = (rows) => `${rows.length} of ${S.audit.length} entries`;
+      function viewAudit() {
+        if (!isQM(S.me)) return `<div class="card empty"><h2>Audit log</h2><p>Only quality managers read the audit log.</p><p style="margin-top:12px"><a class="btn" href="#/work">Back to my work</a></p></div>`;
+        const f = S.ui.audit;
+        const opts = (key, all) => `<option value="">${all}</option>${[...new Set(S.audit.map((a) => a[key]))].sort().map((x) => `<option ${x === f[key] ? 'selected' : ''}>${esc(x)}</option>`).join('')}`;
+        const rows = auditRows();
+        return `<div class="head"><div><h1>Audit log</h1><p class="dim">Every lifecycle and training action in the system: who or what did it, to which record, and when. Nobody, administrators included, can edit or delete an entry.</p></div></div>
+          <div class="bar"><select class="inp" aria-label="Actor" data-chg="auditF" data-f="actor">${opts('actor', 'Every actor')}</select>
+            <select class="inp" aria-label="Action" data-chg="auditF" data-f="action">${opts('action', 'Every action')}</select>
+            <input class="inp" id="auditQ" type="search" placeholder="Search a record, for example SOP-4" aria-label="Search" value="${esc(f.q)}" />
+            <span class="dim small" id="auditCount">${auditCount(rows)}</span></div>
+          <div class="scroll"><table><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Record</th></tr></thead><tbody id="auditBody">${auditBody(rows)}</tbody></table></div>
+          <p class="hint">Field-level changes of one QDoc, with previous and new values, are on its Activity tab.</p>`;
+      }
+
+      function bannerFor(q, v, r) {
+        if (q.retired)
+          return `<div class="banner red"><b>Retired by ${esc(name(q.retired.who))}</b> on ${q.retired.when}, with an electronic signature.<blockquote>${esc(q.retired.reason)}</blockquote>
+            <p class="small" style="margin-top:6px">No version is in force. The versions, the activity and the signed QACKs are kept.</p></div>`;
+        const eff = effectiveOf(q);
+        const applies = eff && eff !== v ? ` Until then version ${eff.no} applies.` : '';
+        if (v.status === 'Draft' && v.declined)
+          return `<div class="banner red"><b>Declined by ${esc(name(v.declined.who))}</b> on ${v.declined.when}, with an electronic signature.<blockquote>${esc(v.declined.comment)}</blockquote>
+            <p class="small" style="margin-top:6px">The version is back with the owner. A file you change loses its approvals; the others keep theirs.</p></div>`;
+        const text = {
+          Draft: r.owner
+            ? 'Draft. Only contributors and quality managers see this version. Name the people, resolve every suggestion, then send it on.'
+            : r.qm
+              ? 'Draft. As a quality manager you do on this QDoc what its owner and contributors do.'
+              : 'Draft. You are a contributor: write, comment and suggest. The owner sends the version on.',
+          'In review': r.reviewer
+            ? `Review requested by ${name(q.owner)}. Read each file, comment or suggest, then mark it as reviewed. A mark is an acknowledgement, not a verdict.`
+            : 'In review. The content is locked: nobody edits, adds or removes a file. Revert to draft to resolve suggestions.',
+          'In approval': r.approver
+            ? 'Approve each file with your electronic signature, or decline the version with a comment. Nobody comments in this status.'
+            : 'In approval. Nobody comments in this status. A decline hands the version back to the owner.',
+          Approved: r.qm
+            ? `Approved as version ${v.no}, not yet effective. Publish it with an effective date; each recipient then gets a QACK.${applies}`
+            : `Approved as version ${v.no}. Approved is not effective: a quality manager publishes it with an effective date.${applies}`,
+          Published: `Published. Becomes effective on ${v.effective}, whether or not every QACK is signed.${applies} QACKs assigned: ${v.qacks?.total ?? 0}.${r.qm ? ' You can still change the date.' : ''}`,
+          Effective: `In force since ${v.effective}. QACKs signed: ${v.qacks?.signed ?? 0} of ${v.qacks?.total ?? 0}.`,
+        }[v.status];
+        return `<div class="banner ${v.status === 'Effective' || v.status === 'Approved' ? 'green' : ''}">${esc(text)}</div>`;
+      }
+
+      function actionsFor(q, v, r) {
+        if (q.retired) return '';
+        const lead = r.owner || r.qm;
+        const b = [];
+        if (lead && v.status === 'Draft') {
+          b.push(`<button class="btn danger" data-act="deleteDraft">Delete draft</button>`);
+          b.push(`<button class="btn" data-act="sendReview">Send for review</button>`);
+          b.push(`<button class="btn primary" data-act="sendApproval">Send for approval</button>`);
+        }
+        if (lead && v.status === 'In review') {
+          b.push(`<button class="btn" data-act="revert">Revert to draft</button>`);
+          b.push(`<button class="btn primary" data-act="sendApproval">Send for approval</button>`);
+        }
+        if (r.approver && v.status === 'In approval') b.push(`<button class="btn danger" data-act="decline">Decline version</button>`);
+        if (r.qm && v.status === 'Approved') b.push(`<button class="btn primary" data-act="publish">Publish</button>`);
+        if (r.qm && v.status === 'Published') b.push(`<button class="btn" data-act="reschedule">Change effective date</button>`);
+        if (r.qm && v.status === 'Effective') b.push(`<button class="btn danger" data-act="retire">Retire QDoc</button>`);
+        if ((lead || r.contributor) && v.status === 'Effective') b.push(`<button class="btn primary" data-act="newDraft">New draft version</button>`);
+        return b.join('');
+      }
+
+      function fileAction(v, f, p) {
+        if (p.mark) return marked(v, f, S.me) ? '<span class="pill g">Reviewed by you</span>' : `<button class="btn sm primary" data-act="mark" data-fid="${f.id}">Mark as reviewed</button>`;
+        if (p.approve) return approved(v, f, S.me) ? '<span class="pill g">Approved by you</span>' : `<button class="btn sm primary" data-act="approve" data-fid="${f.id}">Approve</button>`;
+        return '';
+      }
+
+      function tabFiles(q, v, r, p) {
+        const frac = (list, test) => (list.length ? `${list.filter(test).length}/${list.length}` : '<span class="no">n/a</span>');
+        const content = v.files.filter((f) => f.kind === 'content');
+        const rows = v.files
+          .map((f) => {
+            const isPdf = f.kind === 'pdf';
+            const scan = { quarantine: 'Quarantined', released: 'Released', failed: 'Failed' }[f.scan];
+            const nameCell = isPdf
+              ? `<b>${esc(f.name)}</b> <span class="dim small">${f.size}</span> ${pill(scan)}${f.scan === 'failed' ? `<div class="small dim">${esc(f.reason)} Stays listed until a contributor removes it.</div>` : ''}${f.scan === 'quarantine' ? '<div class="small dim">Being scanned for malware and inappropriate content.</div>' : ''}`
+              : `<a class="strong" href="#/qdoc/${q.id}/file/${f.id}">${esc(f.name)}</a>`;
+            const acts = [fileAction(v, f, p)];
+            if (isPdf && f.scan === 'released') acts.push(`<button class="btn sm" data-act="download" data-fid="${f.id}">Download</button>`);
+            if (!isPdf) acts.push(`<a class="btn sm" href="#/qdoc/${q.id}/file/${f.id}">${p.edit ? 'Edit' : 'Open'}</a>`);
+            if (p.edit && (isPdf || content.length > 1)) acts.push(`<button class="btn sm ghost danger" data-act="removeFile" data-fid="${f.id}">Remove</button>`);
+            return `<tr><td>${nameCell}</td><td class="nw">${isPdf ? 'PDF attachment' : 'Content file'}</td>
+              <td class="num">${isPdf ? '' : f.comments.length}</td><td class="num">${isPdf ? '' : f.suggestions.filter((s) => s.status === 'open').length}</td>
+              <td class="num">${frac(v.reviewers, (u) => marked(v, f, u))}</td><td class="num">${frac(v.approvers, (u) => approved(v, f, u))}</td><td class="r"><span class="acts" style="justify-content:flex-end">${acts.join('')}</span></td></tr>`;
+          })
+          .join('');
+        const matrix = (title, people, test, hint) =>
+          `<section><h2>${title}</h2><p class="dim small" style="margin:-6px 0 8px">${hint}</p><div class="scroll"><table><thead><tr><th>File</th>${people.map((u) => `<th class="num">${esc(name(u))}${isQM(u) ? ' (QM)' : ''}</th>`).join('')}</tr></thead>
+            <tbody>${v.files.map((f) => `<tr><td>${esc(f.name)}</td>${people.map((u) => `<td class="num">${test(f, u) ? '<span class="ok" aria-label="done">✓</span>' : '<span class="no" aria-label="waiting">–</span>'}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`;
+        const ready = readiness(v);
+        return `<section><div class="head" style="margin-bottom:10px"><h2>Files in version ${v.no}</h2>${
+          p.edit ? `<div class="acts"><button class="btn sm" data-act="addFile">Add content file</button><button class="btn sm" data-act="upload">Upload PDF</button></div>` : ''
+        }</div>
+          <div class="scroll"><table><thead><tr><th>File</th><th>Kind</th><th class="num">Comments</th><th class="num">Open suggestions</th><th class="num">Reviewed</th><th class="num">Approved</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+          ${v.status !== 'Draft' ? '<p class="hint">Outside draft nobody edits, adds or removes a file.</p>' : ''}</section>
+          ${p.lead && !q.retired && ['Draft', 'In review'].includes(v.status) ? `<section><div class="card"><h2>Ready for approval?</h2><ul class="check">${ready.map((c) => `<li><span class="${c.ok ? 'ok' : 'no'}">${c.ok ? '✓' : '✕'}</span><span>${c.text}</span></li>`).join('')}</ul></div></section>` : ''}
+          ${v.reviewers.length && v.status !== 'Draft' ? matrix('Review marks', v.reviewers, (f, u) => marked(v, f, u), 'One mark per reviewer and file. The owner is told once, when every reviewer has marked every file.') : ''}
+          ${['In approval', 'Approved', 'Published', 'Effective'].includes(v.status) && v.approvers.length ? matrix('Approvals', v.approvers, (f, u) => approved(v, f, u), 'The version is approved once each approver has approved each file.') : ''}`;
+      }
+
+      function tabPeople(q, v, r, p) {
+        const all = Object.keys(U);
+        const users = all.filter((u) => !isEmp(u));
+        const pub = `<label style="display:flex;gap:8px;margin-top:12px"><input type="checkbox" data-chg="public" ${v.public ? 'checked' : ''} ${p.manage ? '' : 'disabled'} style="margin-top:4px" />
+          <span><b>Public</b>: once effective, every user reads this version in the library, not only its recipients. Only recipients get a QACK.</span></label>`;
+        const lists = [
+          { key: 'contributors', title: 'Contributors', hint: 'Authors who write the files with the owner.', fixed: [q.owner], pool: users.filter((u) => u !== q.owner && !isQM(u)) },
+          { key: 'reviewers', title: 'Reviewers', hint: 'Review is optional. The owner cannot be a reviewer.', pool: users.filter((u) => u !== q.owner) },
+          { key: 'approvers', title: 'Approvers', hint: 'Each approver approves each file. At least one is a quality manager.', pool: users, warn: !v.approvers.some(isQM) && 'No quality manager among the approvers yet.' },
+          { key: 'recipients', title: 'Recipients', hint: `Users and groups who learn this version and read it in the library. ${plural(rcpCount(v), 'person')} will get a QACK.`, extra: pub, pool: [...Object.keys(G).map((g) => 'g:' + g), ...all.map((u) => 'u:' + u)], rcp: true },
+        ];
+        return `<div class="grid2">${lists
+          .map((l) => {
+            const label = (id) => (l.rcp ? rcp(id) : name(id) + (isQM(id) ? ' (quality manager)' : ''));
+            const left = l.pool.filter((id) => !v[l.key].includes(id));
+            return `<div class="card"><h2>${l.title}</h2><p class="dim small" style="margin-bottom:10px">${l.hint}</p>
+              <div class="chips">${(l.fixed || []).map((u) => `<span class="chip plain">${esc(name(u))} <span class="pill b">owner</span></span>`).join('')}${
+                v[l.key].map((id) => `<span class="chip ${p.manage ? '' : 'plain'}">${esc(label(id))}${p.manage ? `<button aria-label="Remove ${esc(label(id))}" data-act="rmPerson" data-list="${l.key}" data-id="${id}">✕</button>` : ''}</span>`).join('') ||
+                (l.fixed ? '' : '<span class="dim small">Nobody named.</span>')
+              }</div>
+              ${l.warn ? `<p class="err">${l.warn}</p>` : ''}${l.extra || ''}
+              ${p.manage && left.length ? `<label class="field">Add<select data-chg="addPerson" data-list="${l.key}"><option value="">Choose…</option>${left.map((id) => `<option value="${id}">${esc(label(id))}</option>`).join('')}</select></label>` : ''}
+            </div>`;
+          })
+          .join('')}</div>${p.manage ? '' : `<p class="hint">${p.lead ? 'People are named while the version is a draft.' : 'Only the owner and the quality managers name the people on a QDoc.'}</p>`}`;
+      }
+
+      function tabTraining(q, v, r, p) {
+        const dis = p.manage ? '' : 'disabled';
+        const prev = effectiveOf(q);
+        const k = v.qacks;
+        const due = v.effective && v.effective < today();
+        const stat = (n, l) => `<div class="stat"><b>${n}</b>${l}</div>`;
+        const qacks = k
+          ? `<div class="card" style="margin-bottom:16px"><h2>QACKs for version ${v.no}</h2><div class="stats">${stat(k.total, 'assigned')}${stat(k.signed, 'signed')}${stat(due ? 0 : k.total - k.signed, 'to sign')}${stat(due ? k.total - k.signed : 0, 'overdue')}</div>
+              <p class="hint">Due on the effective date, ${v.effective}. An overdue QACK can still be signed; a signed QACK is the training record.</p></div>`
+          : '';
+        return `${qacks}<div class="grid2"><div class="card"><h2>How recipients train</h2>
+            <label style="display:flex;gap:8px"><input type="radio" name="mode" ${v.quiz.on ? '' : 'checked'} ${dis} data-chg="quizOn" value="" /> Read and sign</label>
+            <label style="display:flex;gap:8px"><input type="radio" name="mode" ${v.quiz.on ? 'checked' : ''} ${dis} data-chg="quizOn" value="1" /> Read, pass the quiz and sign</label>
+            <p class="hint">The QACK is due on the effective date and can still be signed when overdue.</p></div>
+          <div class="card"><h2>Earlier signers</h2>${
+            prev && prev !== v
+              ? `<label style="display:flex;gap:8px"><input type="checkbox" ${v.retrain ? 'checked' : ''} ${dis} data-chg="retrain" /> Recipients who signed version ${prev.no} train again on this version</label><p class="hint">The owner decides this for each version.</p>`
+              : '<p class="dim">This QDoc has no earlier effective version; every recipient trains.</p>'
+          }</div></div>
+          ${
+            v.quiz.on
+              ? `<section><div class="head" style="margin-bottom:10px"><div><h2>Quiz</h2><p class="dim small">Multiple choice. Passed only with every answer correct; it can be retaken.</p></div>${p.manage ? '<button class="btn sm" data-act="addQuestion">Add question</button>' : ''}</div>
+                <div class="rows">${
+                  v.quiz.questions
+                    .map(
+                      (x, i) => `<div class="card"><div class="head" style="margin-bottom:6px"><h3>${i + 1}. ${esc(x.q)}</h3>${p.manage ? `<button class="btn sm ghost danger" data-act="rmQuestion" data-i="${i}">Remove</button>` : ''}</div>
+                      <ul class="check">${x.options.map((o, k) => `<li><span class="${k === x.correct ? 'ok' : 'no'}">${k === x.correct ? '✓' : '○'}</span><span>${esc(o)}</span></li>`).join('')}</ul></div>`,
+                    )
+                    .join('') || '<div class="card empty">No questions yet.</div>'
+                }</div></section>`
+              : ''
+          }${p.manage ? '' : '<p class="hint">Training is set by the owner while the version is a draft.</p>'}`;
+      }
+
+      function tabActivity(q) {
+        return `<p class="dim small" style="margin-bottom:10px">Per QDoc, field level: what changed, from what to what, who and when. Append-only.</p>
+          <div class="scroll"><table><thead><tr><th>When</th><th>Who</th><th>Property</th><th>Previous value</th><th>New value</th></tr></thead><tbody>${q.activity
+            .map((a) => `<tr><td class="dim small" style="white-space:nowrap">${a.when}</td><td>${esc(name(a.who))}</td><td>${esc(a.prop)}</td><td class="dim">${esc(a.prev)}</td><td>${esc(a.next)}</td></tr>`)
+            .join('')}</tbody></table></div>`;
+      }
+
+      function tabVersions(q) {
+        const vs = q.versions;
+        const cmp = S.ui.cmp && S.ui.cmp.id === q.id ? S.ui.cmp : { id: q.id, a: vs[Math.max(0, vs.length - 2)].no, b: vs[vs.length - 1].no };
+        S.ui.cmp = cmp;
+        const a = vs.find((v) => v.no === cmp.a) || vs[0];
+        const b = vs.find((v) => v.no === cmp.b) || vs[vs.length - 1];
+        const text = (v, n) => {
+          const f = v.files.find((x) => x.kind === 'content' && x.name === n);
+          return f ? f.paras.map((p) => p.text).join(' ¶ ') : null;
+        };
+        const fileNames = [...new Set([...a.files, ...b.files].filter((f) => f.kind === 'content').map((f) => f.name))];
+        const opts = (sel) => vs.map((v) => `<option ${v.no === sel ? 'selected' : ''}>${v.no}</option>`).join('');
+        return `<section><h2>Version history</h2><div class="scroll"><table><thead><tr><th>Version</th><th>Status</th><th>Effective date</th><th>Files</th><th>QACKs signed</th></tr></thead><tbody>${[...vs]
+          .reverse()
+          .map((v) => `<tr><td class="mono">${v.no}</td><td>${pill(v.status)}</td><td>${v.effective || '<span class="no">not set</span>'}</td><td>${v.files.length}</td><td>${v.qacks ? `${v.qacks.signed} of ${v.qacks.total}` : '<span class="no">n/a</span>'}</td></tr>`)
+          .join('')}</tbody></table></div><p class="hint">An archived version and its signed QACKs are kept.</p></section>
+          ${
+            vs.length > 1
+              ? `<section><div class="head" style="margin-bottom:10px"><h2>Compare</h2><div class="acts" style="align-items:center"><select class="inp" style="width:auto" aria-label="From version" data-chg="cmp" data-side="a">${opts(a.no)}</select><span class="dim">with</span><select class="inp" style="width:auto" aria-label="To version" data-chg="cmp" data-side="b">${opts(b.no)}</select></div></div>
+                <div class="rows">${fileNames
+                  .map((n) => {
+                    const ta = text(a, n);
+                    const tb = text(b, n);
+                    const state = ta === null ? '<span class="pill g">Added</span>' : tb === null ? '<span class="pill r">Removed</span>' : ta === tb ? '<span class="pill">Unchanged</span>' : '<span class="pill y">Changed</span>';
+                    return `<div class="card"><div class="head" style="margin-bottom:8px"><h3>${esc(n)}</h3>${state}</div><div>${diffHtml(ta ?? '', tb ?? '')}</div></div>`;
+                  })
+                  .join('')}</div><p class="hint"><ins>Additions</ins> and <del>removals</del> are marked.</p></section>`
+              : '<section><div class="card empty">Comparison needs two versions; this QDoc has one.</div></section>'
+          }`;
+      }
+
+      function viewFile(q, v, r, f) {
+        const p = perms(v, r);
+        const open = f.suggestions.filter((s) => s.status === 'open');
+        const paras = f.paras
+          .map((x) => {
+            const s = open.find((o) => o.pid === x.id);
+            const nC = f.comments.filter((c) => c.pid === x.id).length;
+            const body = s
+              ? `<div class="ptext" title="Resolve the suggestion to edit this paragraph">${diffHtml(x.text, s.to)}</div>`
+              : `<div class="ptext" ${p.edit ? `contenteditable="plaintext-only" role="textbox" aria-label="${x.h ? 'Heading' : 'Paragraph'}" data-pid="${x.id}" data-ph="${x.h ? 'Heading' : 'Write here'}"` : ''}>${esc(x.text)}</div>`;
+            const badges = `${nC ? `<button class="pill b" style="border:0;cursor:pointer" data-act="focusPara" data-pid="${x.id}">${plural(nC, 'comment')}</button>` : ''}${s ? `<button class="pill v" style="border:0;cursor:pointer" data-act="focusPara" data-pid="${x.id}">Suggestion by ${esc(name(s.who))}</button>` : ''}`;
+            return `<div class="para ${x.h ? 'h' : ''} ${S.ui.focus === x.id ? 'focus' : ''}" id="${x.id}">${body}${badges ? `<div class="ptools">${badges}</div>` : ''}<div class="pacts">
+              ${p.comment ? `<button class="btn sm ghost" data-act="compose" data-kind="comment" data-pid="${x.id}">Comment</button>` : ''}
+              ${p.comment && !s ? `<button class="btn sm ghost" data-act="compose" data-kind="suggest" data-pid="${x.id}">Suggest</button>` : ''}
+              ${p.edit && !s && f.paras.length > 1 ? `<button class="btn sm ghost danger" data-act="rmPara" data-pid="${x.id}">Remove</button>` : ''}
+            </div></div>`;
+          })
+          .join('');
+
+        const quote = (pid) => {
+          const x = f.paras.find((y) => y.id === pid);
+          const t = x ? x.text : 'Paragraph removed';
+          return `<div class="quote">${esc(t.length > 90 ? t.slice(0, 90) + '…' : t)}</div>`;
+        };
+        const c = S.ui.composer;
+        const composer =
+          c && f.paras.some((x) => x.id === c.pid)
+            ? `<form class="thread" data-form="composer"><h3>${c.kind === 'comment' ? 'New comment' : 'Suggest an edit'}</h3>${quote(c.pid)}
+                <textarea class="inp" name="text" required aria-label="${c.kind === 'comment' ? 'Comment' : 'Suggested text'}">${c.kind === 'suggest' ? esc(f.paras.find((x) => x.id === c.pid).text) : ''}</textarea>
+                <div class="acts" style="margin-top:8px;justify-content:flex-end"><button type="button" class="btn sm" data-act="cancelCompose">Cancel</button><button class="btn sm primary">${c.kind === 'comment' ? 'Comment' : 'Suggest'}</button></div></form>`
+            : '';
+        const threads = [
+          ...f.suggestions.map((s) => ({ t: 's', x: s })),
+          ...f.comments.map((x) => ({ t: 'c', x })),
+        ]
+          .sort((a, b) => (a.x.status === 'open' ? 0 : 1) - (b.x.status === 'open' ? 0 : 1) || b.x.when.localeCompare(a.x.when))
+          .map(({ t, x }) => {
+            const by = `<div class="by"><span><b>${esc(name(x.who))}</b> ${t === 's' ? 'suggests' : 'comments'}</span><span>${x.when}</span></div>`;
+            if (t === 'c')
+              return `<div class="thread">${by}<button class="quote" style="border:0;cursor:pointer;text-align:left;width:100%" data-act="focusPara" data-pid="${x.pid}">${quote(x.pid).replace(/^<div class="quote">|<\/div>$/g, '')}</button><p>${esc(x.text)}</p>
+                ${x.replies.map((y) => `<div class="reply"><div class="by"><b>${esc(name(y.who))}</b><span>${y.when}</span></div><p>${esc(y.text)}</p></div>`).join('')}
+                ${p.comment ? `<form class="inline" data-form="reply" data-cid="${x.id}"><input class="inp" name="text" required placeholder="Reply" aria-label="Reply" /><button class="btn sm">Reply</button></form>` : ''}</div>`;
+            const para = f.paras.find((y) => y.id === x.pid);
+            const body = x.status === 'open' && para ? diffHtml(para.text, x.to) : esc(x.to);
+            const state =
+              x.status !== 'open'
+                ? `<span class="pill ${x.status === 'accepted' ? 'g' : ''}">${x.status === 'accepted' ? 'Accepted' : 'Discarded'} by ${esc(name(x.by))}</span>`
+                : p.resolve
+                  ? `<button class="btn sm primary" data-act="resolve" data-sid="${x.id}" data-to="accepted">Accept</button><button class="btn sm" data-act="resolve" data-sid="${x.id}" data-to="discarded">Discard</button>`
+                  : `<span class="dim small">${p.lead ? 'Revert to draft to accept or discard.' : 'The owner accepts or discards it.'}</span>`;
+            return `<div class="thread ${x.status === 'open' ? '' : 'closed'}">${by}<p>${body}</p><div class="acts" style="margin-top:8px;align-items:center">${state}</div></div>`;
+          })
+          .join('');
+        const history = f.history.map((h) => `<div class="thread"><div class="by"><b>${esc(name(h.who))}</b><span>${h.when}</span></div><p>${esc(h.what)}</p></div>`).join('') || '<div class="thread dim">No changes recorded.</div>';
+        const others = [q.owner, ...v.contributors].filter((u) => u !== S.me);
+        const rule = { Draft: p.comment ? '' : 'In draft only contributors comment.', 'In review': p.comment ? '' : 'In review the owner, the reviewers and the quality managers comment.', 'In approval': 'Nobody comments while the version is in approval.' }[v.status] ?? 'Comments are closed for this version.';
+
+        return `<div class="crumbs"><a href="#/qdocs">QDocs</a> / <a href="#/qdoc/${q.id}">${q.id} ${esc(q.title)}</a> / ${esc(f.name)}</div>
+          <div class="head"><div><h1>${esc(f.name)}</h1><div class="meta"><span class="mono">${q.id}</span><span>version ${v.no}</span>${pill(v.status)}
+            ${p.edit ? `<span class="presence" id="saved">Every edit is kept</span>${others.length ? `<span class="presence"><span class="dot"></span>Also editing: ${esc(names(others.slice(0, 1)))}</span>` : ''}` : '<span>Locked: read only</span>'}</div></div>
+            <div class="acts">${fileAction(v, f, p)}<a class="btn" href="#/qdoc/${q.id}">Back to ${q.id}</a></div></div>
+          <div class="fileview"><div><div class="doc">${paras}</div>
+            ${p.edit ? `<div class="acts" style="margin-top:10px"><button class="btn sm" data-act="addPara">Add paragraph</button><button class="btn sm" data-act="addPara" data-h="1">Add heading</button></div>` : ''}</div>
+            <aside class="panel" aria-label="Comments, suggestions and change history">
+              <div class="tabs" style="margin:0"><button aria-pressed="${S.ui.panel === 'threads'}" data-act="panel" data-k="threads">Comments and suggestions</button><button aria-pressed="${S.ui.panel === 'history'}" data-act="panel" data-k="history">Change history</button></div>
+              ${S.ui.panel === 'history' ? history : `${composer}${rule ? `<p class="hint" style="margin:0">${rule}</p>` : ''}${threads || '<div class="thread dim">No comments or suggestions on this file.</div>'}`}
+            </aside></div>`;
+      }
+
+      function viewQdoc(q, tab, fid) {
+        const v = cur(q);
+        const r = roles(q, v, S.me);
+        if (!visible(q, S.me))
+          return `<div class="card empty"><h2>${q.id} is not visible to ${esc(name(S.me))}</h2><p>Version ${v.no} is ${v.status.toLowerCase()}. A draft is visible only to its contributors and the quality managers.</p><p style="margin-top:12px"><a class="btn" href="#/qdocs">Back to QDocs</a></p></div>`;
+        const f = fid && v.files.find((x) => x.id === fid && x.kind === 'content');
+        if (tab === 'file' && f) return viewFile(q, v, r, f);
+        const p = perms(v, r);
+        const tabs = [['files', 'Files'], ['people', 'People'], ['training', 'Training'], ['activity', 'Activity'], ['versions', 'Versions']];
+        const t = tabs.some(([k]) => k === tab) ? tab : 'files';
+        const at = q.retired ? -1 : STEPS.indexOf(v.status);
+        const body = { files: tabFiles, people: tabPeople, training: tabTraining, activity: tabActivity, versions: tabVersions }[t](q, v, r, p);
+        return `<div class="crumbs"><a href="#/qdocs">QDocs</a> / ${q.id}</div>
+          <div class="head"><div><h1><span class="mono">${q.id}</span> ${esc(q.title)}</h1>
+            <div class="meta"><span>${q.type}</span><span>version ${v.no}</span>${q.retired ? pill('Retired') : pill(v.status)}<span>Owner: ${esc(name(q.owner))}</span>${v.public ? '<span class="pill g">Public</span>' : ''}${roleNames(r).map((x) => `<span class="pill b">You: ${x}</span>`).join('')}</div></div>
+            <div class="acts">${actionsFor(q, v, r)}</div></div>
+          <ol class="steps" aria-label="Lifecycle">${STEPS.map((s, i) => `<li class="${i < at ? 'done' : i === at ? 'now' : ''}" ${i === at ? 'aria-current="step"' : ''}>${s}</li>`).join('')}</ol>
+          ${bannerFor(q, v, r)}
+          <nav class="tabs" aria-label="QDoc sections">${tabs.map(([k, l]) => `<a href="#/qdoc/${q.id}/${k}" ${k === t ? 'aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
+          ${body}`;
+      }
+
+      // ---------- Render and routing ----------
+      const route = () => {
+        const p = location.hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
+        return p[0] ? p : ['work'];
+      };
+      const openQ = () => (route()[0] === 'qdoc' ? find(route()[1]) : null);
+      const openK = () => (route()[0] === 'qack' ? S.qacks.find((k) => k.id === route()[1]) : null);
+      const openF = () => {
+        const q = openQ();
+        return q && cur(q).files.find((f) => f.id === route()[3]);
+      };
+
+      function renderProto() {
+        const q = openQ();
+        const sim = [];
+        if (q && visible(q, S.me) && !q.retired) {
+          const v = cur(q);
+          v.files.filter((f) => f.kind === 'pdf' && f.scan === 'quarantine').forEach((f) => {
+            sim.push(`<button data-act="simScan" data-fid="${f.id}" data-res="released">Scan releases ${esc(f.name)}</button>`);
+            sim.push(`<button data-act="simScan" data-fid="${f.id}" data-res="failed">Scan fails it</button>`);
+          });
+          if (v.status === 'In review') sim.push('<button data-act="simReview">Other reviewers mark every file</button>');
+          if (v.status === 'In approval') sim.push('<button data-act="simApprove">Other approvers approve every file</button>');
+          if (v.status === 'Approved' && !isQM(S.me)) sim.push('<button data-act="simPublish">Quality manager publishes</button>');
+          if (v.status === 'Published') sim.push('<button data-act="simEffective">Effective date arrives</button>');
+        }
+        $('#proto').innerHTML = `<span class="proto-tag">Prototype</span>
+          <label>Signed in as <select data-chg="persona">${PERSONAS.map((u) => `<option value="${u}" ${u === S.me ? 'selected' : ''}>${esc(name(u))} (${U[u].level.toLowerCase()})</option>`).join('')}</select></label>
+          <label>Jump to <select data-chg="jump"><option value="">a scenario…</option>${SCENARIOS.map((s, i) => `<option value="${i}">${s[0]}</option>`).join('')}</select></label>
+          ${sim.length ? `<span class="sim"><span>Simulate others:</span>${sim.join('')}</span>` : ''}
+          <button class="push" data-act="reset">Reset data</button>`;
+      }
+
+      function render() {
+        const r = route();
+        const q = r[0] === 'qdoc' ? find(r[1]) : null;
+        const emp = isEmp(S.me);
+        const authorsOnly = `<div class="card empty"><h2>QDocs in preparation are for authors</h2><p>Employees read the versions in force in the library and learn new versions through their QACKs.</p><p style="margin-top:12px"><a class="btn" href="#/library">Open the library</a></p></div>`;
+        const body = r[0] === 'audit' ? viewAudit() : r[0] === 'library' ? (r[1] ? viewLibDoc(r[1]) : viewLibrary()) : r[0] === 'training' ? viewTraining() : r[0] === 'qack' ? viewQack(r[1]) : emp && (r[0] === 'qdocs' || r[0] === 'qdoc') ? authorsOnly : r[0] === 'qdocs' ? viewList() : r[0] === 'qdoc' ? (q ? viewQdoc(q, r[2], r[3]) : `<div class="card empty">No such QDoc. <a href="#/qdocs">Back to QDocs</a></div>`) : viewWork();
+        const n = tasks(S.me).length;
+        $('#app').innerHTML = `<div class="shell"><nav class="side" aria-label="Main"><div class="brand">QDoc</div>
+          <a class="nav ${r[0] === 'work' ? 'on' : ''}" href="#/work">My work${n ? `<span class="count" aria-label="${n} to do">${n}</span>` : ''}</a>
+          ${emp ? '' : `<a class="nav ${r[0] === 'qdocs' || r[0] === 'qdoc' ? 'on' : ''}" href="#/qdocs">QDocs</a>`}
+          <a class="nav ${r[0] === 'library' ? 'on' : ''}" href="#/library">Library</a>
+          <a class="nav ${r[0] === 'training' || r[0] === 'qack' ? 'on' : ''}" href="#/training">My training</a>
+          ${isQM(S.me) ? `<a class="nav ${r[0] === 'audit' ? 'on' : ''}" href="#/audit">Audit log</a>` : ''}
+          <div class="who"><b>${esc(name(S.me))}</b><span class="dim">${U[S.me].level}</span></div></nav><main class="main">${body}</main></div>`;
+        renderProto();
+        if (S.ui.edit) {
+          const el = document.querySelector(`[data-pid="${S.ui.edit}"][contenteditable]`);
+          S.ui.edit = null;
+          el?.focus();
+        }
+      }
+      addEventListener('hashchange', () => {
+        S.ui.composer = null;
+        S.ui.focus = null;
+        S.ui.quiz = null;
+        render();
+        scrollTo(0, 0);
+      });
+
+      // ---------- Actions ----------
+      const A = {
+        reset() {
+          S = seed();
+          location.hash = '#/work';
+          render();
+        },
+        filter(d) {
+          S.filter = d.k;
+        },
+        panel(d) {
+          S.ui.panel = d.k;
+        },
+        focusPara(d) {
+          S.ui.focus = S.ui.focus === d.pid ? null : d.pid;
+          S.ui.panel = 'threads';
+        },
+        compose(d) {
+          S.ui.composer = { kind: d.kind, pid: d.pid };
+          S.ui.focus = d.pid;
+          S.ui.panel = 'threads';
+        },
+        cancelCompose() {
+          S.ui.composer = null;
+        },
+        download(d) {
+          toast(`Download of ${openQ() && cur(openQ()).files.find((f) => f.id === d.fid).name} started.`);
+        },
+
+        newQdoc() {
+          const preview = (t) => `ID will be <b class="mono">${TYPES[t]}-${S.next[TYPES[t]]}</b>. The first draft is version 0.1 and you are its owner.`;
+          openDlg(
+            `<h2>New QDoc</h2><label class="field">Title<input name="title" required autofocus /></label>
+             <label class="field">Document type<select name="type" data-chg="typePreview">${Object.keys(TYPES).map((t) => `<option ${t === 'SOP' ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+             <p class="hint" id="idPreview">${preview('SOP')}</p>${dlgActs('Create QDoc')}`,
+            ({ title, type }) => {
+              const pre = TYPES[type];
+              const q = { id: `${pre}-${S.next[pre]++}`, title: title.trim(), type, owner: S.me, updated: stamp(), activity: [], versions: [ver('0.1', 'Draft', { files: [cfile('Main text', [['']])] })] };
+              log(q, S.me, 'Version', 'none', '0.1 draft opened');
+              audit(S.me, 'QDoc created', rec(q, cur(q)));
+              S.qdocs.unshift(q);
+              location.hash = `#/qdoc/${q.id}`;
+            },
+          );
+          dlg.preview = preview;
+          return false;
+        },
+
+        addFile() {
+          openDlg(`<h2>Add content file</h2><label class="field">File name<input name="name" required autofocus /></label>${dlgActs('Add file')}`, ({ name: n }) => {
+            const q = openQ();
+            const f = cfile(n.trim(), [['']]);
+            cur(q).files.push(f);
+            log(q, S.me, 'Files', 'none', `Content file added: ${f.name}`);
+          });
+          return false;
+        },
+        upload() {
+          const samples = [
+            ['Annex A, wiring diagram.pdf', '2.1 MB', ''],
+            ['Photo renamed to .pdf', '0.9 MB', 'Rejected: the content is not a PDF.'],
+            ['Oversized scan.pdf', '310 MB', 'Rejected: the file is over the size limit.'],
+          ];
+          openDlg(
+            `<h2>Upload PDF</h2><p class="dim small">PDF only, checked from the content, within the size limit. An upload stays in quarantine until it is scanned.</p>
+             <label class="field">Sample file<select name="i">${samples.map((s, i) => `<option value="${i}">${s[0]} (${s[1]})</option>`).join('')}</select></label>${dlgActs('Upload')}`,
+            ({ i }) => {
+              const [n, size, err] = samples[i];
+              if (err) return err;
+              const q = openQ();
+              cur(q).files.push(pdf(n, size, 'quarantine'));
+              log(q, S.me, 'Files', 'none', `Attachment uploaded: ${n} (quarantined)`);
+              audit(S.me, 'Attachment uploaded', rec(q, cur(q), n));
+              toast('Uploaded. The attachment is in quarantine until the scan finishes.');
+            },
+          );
+          return false;
+        },
+        removeFile(d) {
+          const q = openQ();
+          const v = cur(q);
+          const f = v.files.find((x) => x.id === d.fid);
+          confirmDlg(`Remove ${f.name}?`, '<p>The file leaves this draft version. Earlier versions keep theirs.</p>', 'Remove', () => {
+            v.files = v.files.filter((x) => x !== f);
+            delete v.marks[f.id];
+            delete v.approvals[f.id];
+            log(q, S.me, 'Files', f.name, 'removed');
+          }, 'danger');
+          return false;
+        },
+        addPara(d) {
+          const x = para('', d.h);
+          openF().paras.push(x);
+          S.ui.edit = x.id;
+        },
+        rmPara(d) {
+          const q = openQ();
+          const f = openF();
+          f.paras = f.paras.filter((x) => x.id !== d.pid);
+          touch(q, cur(q), f, 'Removed a paragraph');
+        },
+        resolve(d) {
+          const q = openQ();
+          const f = openF();
+          const s = f.suggestions.find((x) => x.id === d.sid);
+          s.status = d.to;
+          s.by = S.me;
+          audit(S.me, `Suggestion ${d.to}`, rec(q, cur(q), f.name));
+          if (d.to === 'accepted') {
+            const x = f.paras.find((y) => y.id === s.pid);
+            if (x) x.text = s.to;
+            touch(q, cur(q), f, `Accepted a suggestion by ${name(s.who)}`);
+          }
+        },
+        rmPerson(d) {
+          const q = openQ();
+          const v = cur(q);
+          const label = (l) => (d.list === 'recipients' ? (l.map(rcp).join(', ') || 'none') : names(l));
+          const prev = label(v[d.list]);
+          v[d.list] = v[d.list].filter((x) => x !== d.id);
+          log(q, S.me, d.list[0].toUpperCase() + d.list.slice(1), prev, label(v[d.list]));
+        },
+        addQuestion() {
+          openDlg(
+            `<h2>Add quiz question</h2><label class="field">Question<input name="q" required autofocus /></label>
+             <label class="field">Option A<input name="a" required /></label><label class="field">Option B<input name="b" required /></label><label class="field">Option C (optional)<input name="c" /></label>
+             <label class="field">Correct answer<select name="correct"><option value="0">A</option><option value="1">B</option><option value="2">C</option></select></label>${dlgActs('Add question')}`,
+            (f) => {
+              const options = [f.a, f.b, f.c].map((s) => s.trim()).filter(Boolean);
+              if (+f.correct >= options.length) return 'Option C is empty, so it cannot be the correct answer.';
+              const q = openQ();
+              cur(q).quiz.questions.push({ q: f.q.trim(), options, correct: +f.correct });
+              log(q, S.me, 'Quiz', plural(cur(q).quiz.questions.length - 1, 'question'), plural(cur(q).quiz.questions.length, 'question'));
+            },
+          );
+          return false;
+        },
+        rmQuestion(d) {
+          const q = openQ();
+          const qs = cur(q).quiz.questions;
+          qs.splice(+d.i, 1);
+          log(q, S.me, 'Quiz', plural(qs.length + 1, 'question'), plural(qs.length, 'question'));
+        },
+
+        sendReview() {
+          const q = openQ();
+          const v = cur(q);
+          if (!v.reviewers.length) {
+            toast('Name at least one reviewer first, or send the version straight for approval: review is optional.');
+            location.hash = `#/qdoc/${q.id}/people`;
+            return false;
+          }
+          confirmDlg(`Send version ${v.no} for review?`, `<p>The content is locked: nobody edits, adds or removes a file until you revert to draft.</p><dl><dt>Reviewers</dt><dd>${esc(names(v.reviewers))}</dd></dl>`, 'Send for review', () => {
+            v.status = 'In review';
+            v.declined = null;
+            v.reviewsDone = false;
+            log(q, S.me, 'Status', 'Draft', 'In review');
+            audit(S.me, 'Version sent for review', rec(q, v));
+            notify(v.reviewers, `${q.id} ${q.title} was sent for review. You are a reviewer.`, `#/qdoc/${q.id}`);
+            checkReviews(q, v);
+          });
+          return false;
+        },
+        sendApproval() {
+          const q = openQ();
+          const v = cur(q);
+          const ready = readiness(v);
+          const ok = ready.every((c) => c.ok);
+          openDlg(
+            `<h2>Send version ${v.no} for approval?</h2><ul class="check">${ready.map((c) => `<li><span class="${c.ok ? 'ok' : 'no'}">${c.ok ? '✓' : '✕'}</span><span>${c.text}</span></li>`).join('')}</ul>
+             ${ok ? `<dl><dt>Approvers</dt><dd>${esc(names(v.approvers))}</dd></dl><p class="hint">Each approver approves each file with an electronic signature. Nobody comments while the version is in approval.</p>` : `<p class="err">${v.status === 'In review' && openSuggestions(v) ? 'Revert to draft to resolve the open suggestions.' : 'Complete the open points first.'}</p>`}
+             ${dlgActs('Send for approval', 'primary', !ok)}`,
+            () => {
+              log(q, S.me, 'Status', v.status, 'In approval');
+              audit(S.me, 'Version sent for approval', rec(q, v));
+              v.status = 'In approval';
+              v.declined = null;
+              notify(v.approvers, `${q.id} ${q.title} was sent for approval. You are an approver.`, `#/qdoc/${q.id}`);
+              checkApproved(q, v);
+            },
+          );
+          return false;
+        },
+        revert() {
+          const q = openQ();
+          const v = cur(q);
+          const next = bumpMinor(v.no);
+          confirmDlg('Revert to draft?', `<p>Contributors can edit again and you can accept or discard suggestions. The draft becomes version ${next}.</p><p class="hint">A file changed after the revert loses its review marks; the others keep theirs.</p>`, 'Revert to draft', () => {
+            log(q, S.me, 'Status', 'In review', 'Draft');
+            log(q, S.me, 'Version number', v.no, next);
+            audit(S.me, 'Version reverted to draft', rec(q, v));
+            v.status = 'Draft';
+            v.no = next;
+          });
+          return false;
+        },
+        deleteDraft() {
+          const q = openQ();
+          const v = cur(q);
+          const eff = effectiveOf(q);
+          confirmDlg(`Delete draft ${v.no}?`, eff ? `<p>The effective version ${eff.no} stays in force.</p>` : `<p>${q.id} has no other version, so the QDoc goes with its draft.</p>`, 'Delete draft', () => {
+            audit(S.me, 'Draft deleted', rec(q, v));
+            if (eff) {
+              q.versions.pop();
+              log(q, S.me, 'Version', `${v.no} draft`, 'deleted');
+            } else S.qdocs = S.qdocs.filter((x) => x !== q);
+            location.hash = eff ? `#/qdoc/${q.id}` : '#/qdocs';
+          }, 'danger');
+          return false;
+        },
+        newDraft() {
+          const q = openQ();
+          const e = cur(q);
+          const no = `${e.no.split('.')[0]}.1`;
+          q.versions.push(
+            ver(no, 'Draft', {
+              files: e.files.map((f) => (f.kind === 'pdf' ? { ...f } : { ...f, paras: f.paras.map((x) => ({ ...x })), comments: [], suggestions: [], history: [{ who: S.me, when: stamp(), what: `File copied from version ${e.no}` }] })),
+              contributors: [...e.contributors],
+              reviewers: [...e.reviewers],
+              approvers: [...e.approvers],
+              recipients: [...e.recipients],
+              public: e.public,
+              quiz: { on: e.quiz.on, questions: e.quiz.questions.map((x) => ({ ...x })) },
+            }),
+          );
+          log(q, S.me, 'Version', `${e.no} effective`, `${no} draft opened`);
+          audit(S.me, 'Draft version opened', rec(q, cur(q)));
+          toast(`Draft ${no} opened. Version ${e.no} stays in force until the new one is effective.`);
+        },
+        mark(d) {
+          const q = openQ();
+          const v = cur(q);
+          markReviewed(q, v, v.files.find((f) => f.id === d.fid), S.me);
+        },
+        approve(d) {
+          const q = openQ();
+          const v = cur(q);
+          const f = v.files.find((x) => x.id === d.fid);
+          sign(`Approval of "${f.name}" in ${q.id} ${q.title}, version ${v.no}.`, () => {
+            approveFile(q, v, f, S.me);
+            checkApproved(q, v);
+          });
+          return false;
+        },
+        decline() {
+          const q = openQ();
+          const v = cur(q);
+          sign(
+            `Decline of ${q.id} ${q.title}, version ${v.no}. The version goes back to ${name(q.owner)}.`,
+            ({ comment }) => {
+              v.status = 'Draft';
+              v.declined = { who: S.me, when: stamp(), comment: comment.trim() };
+              log(q, S.me, 'Status', 'In approval', 'Draft (declined, signed)');
+              audit(S.me, 'Version declined (signed)', rec(q, v));
+              notify(q.owner, `${q.id} ${q.title} was declined by ${name(S.me)}.`, `#/qdoc/${q.id}`);
+              if (!visible(q, S.me)) location.hash = '#/work';
+            },
+            '<label class="field">Reason for declining<textarea name="comment" required></textarea></label>',
+          );
+          return false;
+        },
+
+        dl(d) {
+          toast(`Download of ${d.n} started.`);
+          return false;
+        },
+        libType(d) {
+          S.ui.lib.type = d.k;
+        },
+        readFile(d) {
+          openK().read[d.fid] = true;
+        },
+        signQack() {
+          const k = openK();
+          const q = find(k.qid);
+          const v = versionOf(k);
+          sign(`I have read and understood ${q.id} ${q.title}, version ${v.no}.`, () => {
+            k.status = 'signed';
+            k.signedAt = stamp();
+            v.qacks.signed++;
+            audit(S.me, 'QACK signed', rec(q, v));
+            toast('Signed. The QACK is now your training record.');
+          });
+          return false;
+        },
+
+        // Only a quality manager publishes: an approved version, with an effective date and a signature.
+        publish() {
+          const q = openQ();
+          const v = cur(q);
+          const eff = effectiveOf(q);
+          const today = ymd(new Date());
+          const d = new Date();
+          d.setDate(d.getDate() + 14);
+          const n = qackCount(q, v);
+          sign(
+            `Publication of ${q.id} ${q.title}, version ${v.no}.`,
+            ({ date }) => {
+              if (date < today) return 'The effective date cannot be in the past.';
+              publish(q, v, S.me, date);
+              toast(date === today ? `Published and effective today.` : `Published. ${plural(v.qacks.total, 'QACK')} assigned; effective on ${date}.`);
+            },
+            `<label class="field">Effective date<input type="date" name="date" required min="${today}" value="${ymd(d)}" /></label>
+             <dl><dt>Recipients</dt><dd>${v.recipients.length ? esc(v.recipients.map(rcp).join(', ')) : 'none'}</dd>
+               <dt>Library</dt><dd>${v.public ? 'Public: every user reads it' : 'Recipients only'}</dd>
+               <dt>Training</dt><dd>${v.quiz.on ? `Read, pass the quiz (${plural(v.quiz.questions.length, 'question')}) and sign` : 'Read and sign'}</dd>
+               <dt>QACKs to assign</dt><dd>${n.total}${n.skip ? ` (${n.skip} earlier signers do not train again)` : ''}</dd></dl>
+             <p class="hint">${eff ? `Until the effective date version ${eff.no} applies. ` : ''}The version becomes effective on its date whether or not every QACK is signed.</p>
+             ${v.recipients.length ? '' : '<p class="err">No recipients are named: nobody gets a QACK.</p>'}`,
+          );
+          return false;
+        },
+        // Until the version is effective a quality manager can move its date; open QACKs become due on the new date.
+        reschedule() {
+          const q = openQ();
+          const v = cur(q);
+          const prev = v.effective;
+          const open = v.qacks.total - v.qacks.signed;
+          sign(
+            `Change of the effective date of ${q.id} ${q.title}, version ${v.no}.`,
+            ({ date }) => {
+              if (date < today()) return 'The effective date cannot be in the past.';
+              if (date === prev) return 'This is the current effective date.';
+              v.effective = date;
+              log(q, S.me, 'Effective date', prev, date);
+              audit(S.me, 'Effective date changed (signed)', rec(q, v, `${prev} to ${date}`));
+              notify(q.owner, `${q.id} ${q.title} version ${v.no}: effective date moved from ${prev} to ${date}.`, `#/qdoc/${q.id}`);
+              S.qacks.filter((k) => k.qid === q.id && k.vno === v.no && k.status !== 'signed' && k.user !== q.owner).forEach((k) => notify(k.user, `QACK due date moved: ${q.id} ${q.title} version ${v.no} is now due on ${date}.`, `#/qack/${k.id}`));
+              if (date <= today()) makeEffective(q, v);
+              toast(date === today() ? 'Effective date moved to today: the version is now effective.' : `Effective date moved to ${date}.`);
+            },
+            `<dl><dt>Current date</dt><dd>${prev}</dd><dt>Open QACKs</dt><dd>${open} of ${v.qacks.total}, due on the new date</dd></dl>
+             <label class="field">New effective date<input type="date" name="date" required min="${today()}" value="${prev}" /></label>
+             <p class="hint">Today's date makes the version effective at once.</p>`,
+          );
+          return false;
+        },
+        // Only a quality manager retires a QDoc no longer needed.
+        retire() {
+          const q = openQ();
+          const v = cur(q);
+          sign(
+            `Retirement of ${q.id} ${q.title}. Version ${v.no} stops being in force.`,
+            ({ reason }) => {
+              q.retired = { who: S.me, when: stamp(), reason: reason.trim() };
+              v.status = 'Archived';
+              log(q, S.me, 'QDoc', 'Active', 'Retired (signed)');
+              log(q, null, `Version ${v.no}`, 'Effective', 'Archived');
+              audit(S.me, 'QDoc retired (signed)', q.id);
+              audit(null, 'Version archived', rec(q, v));
+              notify(q.owner, `${q.id} ${q.title} was retired by ${name(S.me)}.`, `#/qdoc/${q.id}`);
+            },
+            `<label class="field">Reason for retiring<textarea name="reason" required></textarea></label>
+             <p class="hint">The library stops showing this QDoc. Its versions, activity and signed QACKs are kept.</p>`,
+          );
+          return false;
+        },
+
+        simScan(d) {
+          const q = openQ();
+          const f = cur(q).files.find((x) => x.id === d.fid);
+          f.scan = d.res;
+          f.reason = d.res === 'failed' ? 'The scan found malware.' : '';
+          log(q, null, `Scan: ${f.name}`, 'Quarantined', d.res === 'failed' ? 'Failed' : 'Released');
+          audit(null, d.res === 'failed' ? 'Attachment failed the scan' : 'Attachment released', rec(q, cur(q), f.name));
+        },
+        simReview() {
+          const q = openQ();
+          const v = cur(q);
+          v.reviewers.filter((u) => u !== S.me).forEach((u) => v.files.filter((f) => !marked(v, f, u)).forEach((f) => markReviewed(q, v, f, u)));
+        },
+        simApprove() {
+          const q = openQ();
+          const v = cur(q);
+          v.approvers.filter((u) => u !== S.me).forEach((u) => v.files.filter((f) => !approved(v, f, u)).forEach((f) => approveFile(q, v, f, u)));
+          checkApproved(q, v);
+        },
+        simPublish() {
+          const q = openQ();
+          const d = new Date();
+          d.setDate(d.getDate() + 14);
+          publish(q, cur(q), 'ewa', ymd(d));
+        },
+        simEffective() {
+          const q = openQ();
+          makeEffective(q, cur(q));
+        },
+      };
+
+      document.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-act]');
+        if (!el || !A[el.dataset.act]) return;
+        if (A[el.dataset.act](el.dataset) !== false) render();
+      });
+
+      document.addEventListener('change', (e) => {
+        const el = e.target.closest('[data-chg]');
+        if (!el) return;
+        const k = el.dataset.chg;
+        const q = openQ();
+        if (k === 'typePreview') return void ($('#idPreview').innerHTML = dlg.preview(el.value));
+        if (k === 'persona') (S.me = el.value), (S.filter = 'all');
+        if (k === 'auditF') S.ui.audit[el.dataset.f] = el.value;
+        if (k === 'jump' && el.value) {
+          const [, who, hash] = SCENARIOS[el.value];
+          S.me = who;
+          S.filter = 'all';
+          S.ui.panel = 'threads';
+          if (location.hash !== hash) return void (location.hash = hash);
+        }
+        if (k === 'cmp') S.ui.cmp[el.dataset.side] = el.value;
+        if (k === 'addPerson' && el.value) {
+          const v = cur(q);
+          const list = el.dataset.list;
+          const label = (l) => (list === 'recipients' ? (l.map(rcp).join(', ') || 'none') : names(l));
+          const prev = label(v[list]);
+          v[list].push(el.value);
+          log(q, S.me, list[0].toUpperCase() + list.slice(1), prev, label(v[list]));
+          if (list !== 'recipients') notify(el.value, `${name(S.me)} named you among the ${list} of ${q.id} ${q.title}.`, `#/qdoc/${q.id}`);
+        }
+        if (k === 'quizOn') {
+          cur(q).quiz.on = !!el.value;
+          log(q, S.me, 'Training', el.value ? 'Read and sign' : 'Read, quiz and sign', el.value ? 'Read, quiz and sign' : 'Read and sign');
+        }
+        if (k === 'public') {
+          cur(q).public = el.checked;
+          log(q, S.me, 'Public', el.checked ? 'no' : 'yes', el.checked ? 'yes' : 'no');
+        }
+        if (k === 'retrain') {
+          cur(q).retrain = el.checked;
+          log(q, S.me, 'Earlier signers train again', el.checked ? 'no' : 'yes', el.checked ? 'yes' : 'no');
+        }
+        render();
+      });
+
+      document.addEventListener('submit', (e) => {
+        const form = e.target.closest('[data-form]');
+        if (!form) return;
+        e.preventDefault();
+        if (form.dataset.form === 'quiz') {
+          const k = openK();
+          const q = find(k.qid);
+          const v = versionOf(k);
+          const fd = new FormData(form);
+          const answers = v.quiz.questions.map((_, i) => +fd.get('q' + i));
+          const wrong = answers.map((a, i) => (a === v.quiz.questions[i].correct ? -1 : i)).filter((i) => i >= 0);
+          k.attempts++;
+          k.quizPassed = !wrong.length;
+          S.ui.quiz = wrong.length ? { kid: k.id, answers, wrong } : null;
+          audit(S.me, wrong.length ? 'Quiz attempt failed' : 'Quiz passed', rec(q, v));
+          toast(wrong.length ? `${answers.length - wrong.length} of ${answers.length} correct. Every answer must be correct.` : 'Quiz passed. You can sign now.');
+          return render();
+        }
+        const text = new FormData(form).get('text').trim();
+        const f = openF();
+        if (!text || !f) return;
+        if (form.dataset.form === 'reply') f.comments.find((c) => c.id === form.dataset.cid).replies.push({ who: S.me, when: stamp(), text });
+        else {
+          const c = S.ui.composer;
+          const x = f.paras.find((y) => y.id === c.pid);
+          if (c.kind === 'comment') f.comments.push({ id: uid('c'), who: S.me, when: stamp(), pid: c.pid, text, replies: [] });
+          else if (text !== x.text) f.suggestions.push({ id: uid('s'), who: S.me, when: stamp(), pid: c.pid, to: text, status: 'open' });
+          else toast('The suggested text is the same as the paragraph.');
+          S.ui.composer = null;
+        }
+        render();
+      });
+
+      // Edits are saved when the paragraph loses focus. No re-render here, so a click that follows still lands.
+      document.addEventListener('focusout', (e) => {
+        const el = e.target.closest?.('.ptext[contenteditable]');
+        const f = openF();
+        if (!el || !f) return;
+        const x = f.paras.find((y) => y.id === el.dataset.pid);
+        const text = el.innerText.replace(/\n+$/, '');
+        if (!x || x.text === text) return;
+        const what = x.text ? `Edited ${x.h ? 'a heading' : 'a paragraph'}` : `Wrote ${x.h ? 'a heading' : 'a paragraph'}`;
+        x.text = text;
+        touch(openQ(), cur(openQ()), f, what);
+        const saved = $('#saved');
+        if (saved) saved.textContent = `Saved at ${stamp().slice(11)}`;
+      });
+
+      // The search narrows the table in place, so the field keeps its focus.
+      document.addEventListener('input', (e) => {
+        if (e.target.id === 'libQ') {
+          S.ui.lib.q = e.target.value;
+          $('#libBody').innerHTML = libBody(libRows());
+          return;
+        }
+        if (e.target.id !== 'auditQ') return;
+        S.ui.audit.q = e.target.value;
+        const rows = auditRows();
+        $('#auditBody').innerHTML = auditBody(rows);
+        $('#auditCount').textContent = auditCount(rows);
+      });
+
+      if (!location.hash) location.hash = '#/work';
+      render();
+    </script>
+  </body>
+</html>
