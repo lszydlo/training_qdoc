@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body { margin: 0; }</style>
+<title>QDoc Event Storming</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600&family=IBM+Plex+Sans:wght@400;500;600&family=Kalam:wght@400;700&display=swap">
+<style>
+/* Layout: one long paper roll that scrolls sideways. Time runs left to right, lanes stack the kinds of note.
+   Reading text sits above and below the roll in a narrow column. */
+:root {
+  --bg: #E9ECF0;
+  --paper: #F8F8F5;
+  --fg: #1A222E;
+  --muted: #566173;
+  --line: #C9CFD8;
+  --tape: #2B6CB0;
+  --event: #FFA64D;
+  --actor: #FFE272;
+  --policy: #D3C4FF;
+  --system: #F8B5D1;
+  --hot: #FF7163;
+  --note-ink: #1E1A15;
+  --shadow: 0 1px 0 rgba(0, 0, 0, .10), 0 8px 10px -8px rgba(0, 0, 0, .35);
+  --f-display: "IBM Plex Sans Condensed", "Arial Narrow", Arial, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --f-note: "Kalam", "Segoe Print", "Comic Sans MS", cursive;
+  --lane-w: 104px;
+  --col-w: 152px;
+  --gap: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161C;
+    --paper: #1B2129;
+    --fg: #E6E9EE;
+    --muted: #9BA5B4;
+    --line: #353D49;
+    --tape: #62A0E6;
+    --event: #EE9840;
+    --actor: #E9CB52;
+    --policy: #B9A7EE;
+    --system: #EB9DBF;
+    --hot: #EE665A;
+    --note-ink: #1E1A15;
+    --shadow: 0 1px 0 rgba(0, 0, 0, .30), 0 8px 10px -8px rgba(0, 0, 0, .70);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161C;
+  --paper: #1B2129;
+  --fg: #E6E9EE;
+  --muted: #9BA5B4;
+  --line: #353D49;
+  --tape: #62A0E6;
+  --event: #EE9840;
+  --actor: #E9CB52;
+  --policy: #B9A7EE;
+  --system: #EB9DBF;
+  --hot: #EE665A;
+  --note-ink: #1E1A15;
+  --shadow: 0 1px 0 rgba(0, 0, 0, .30), 0 8px 10px -8px rgba(0, 0, 0, .70);
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 15px/1.55 var(--f-body);
+  padding-inline: 16px;
+  padding-block: 36px 56px;
+}
+.page { display: flex; flex-direction: column; gap: 28px; max-width: 1500px; margin-inline: auto; }
+.prose { max-width: 68ch; }
+h1, h2 { font-family: var(--f-display); font-weight: 600; text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: clamp(30px, 5vw, 44px); letter-spacing: -.01em; }
+h2 { font-size: 24px; }
+p { margin: 0; }
+.eyebrow { font: 500 11px/1.3 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.head { display: flex; flex-direction: column; gap: 10px; }
+.lede { color: var(--muted); }
+.lede code, .src code { font: 400 13px var(--f-mono); color: var(--fg); overflow-wrap: anywhere; }
+
+/* legend */
+.legend { display: flex; flex-wrap: wrap; gap: 10px 22px; list-style: none; margin: 0; padding: 0; }
+.legend li { display: flex; align-items: baseline; gap: 8px; min-width: 0; font-size: 13.5px; }
+.sw { flex: none; width: 15px; height: 15px; align-self: center; box-shadow: var(--shadow); }
+.sw.event { background: var(--event); }
+.sw.pivotal { background: var(--event); outline: 2px solid var(--tape); outline-offset: 2px; }
+.sw.actor { background: var(--actor); }
+.sw.system { background: var(--system); }
+.sw.policy { background: var(--policy); }
+.sw.hot { background: var(--hot); }
+.sw.ctx { background: transparent; border: 1.5px dashed var(--tape); box-shadow: none; }
+.legend b { font-weight: 600; }
+.legend .n { font: 500 12px var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.legend .d { color: var(--muted); }
+
+/* phase jump */
+.jump { display: flex; flex-wrap: wrap; gap: 8px; }
+.jump button {
+  font: 500 13px/1.2 var(--f-body); color: var(--fg); background: var(--paper);
+  border: 1px solid var(--line); border-radius: 3px; padding: 7px 10px; cursor: pointer;
+}
+.jump button span { font: 500 12px var(--f-mono); color: var(--muted); margin-right: 6px; }
+.jump button:hover { border-color: var(--tape); }
+button:focus-visible, .scroller:focus-visible { outline: 2px solid var(--tape); outline-offset: 2px; }
+.hint { font: 400 12px var(--f-mono); color: var(--muted); }
+
+/* the wall */
+.wall { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.scroller { overflow-x: auto; background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding-block: 22px; }
+.board {
+  position: relative; display: grid; width: max-content; padding-right: 22px;
+  grid-template-columns: var(--lane-w) repeat(var(--cols, 28), var(--col-w));
+  grid-template-rows: repeat(7, auto);
+  column-gap: var(--gap); row-gap: 20px;
+}
+.lane-bg { grid-column: 1; grid-row: 1 / -1; position: sticky; left: 0; z-index: 2; background: var(--paper); border-right: 1px solid var(--line); }
+.lane {
+  grid-column: 1; position: sticky; left: 0; z-index: 3; padding: 2px 10px 2px 16px;
+  font: 500 11px/1.35 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+}
+.cell { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.pivot { grid-row: 2 / 6; justify-self: center; width: 6px; border-radius: 3px; background: var(--tape); opacity: .38; z-index: 0; }
+
+.phase { grid-row: 1; border-top: 3px solid var(--fg); padding-top: 7px; min-width: 0; }
+.stick { position: sticky; left: calc(var(--lane-w) + var(--gap)); display: block; width: max-content; max-width: 100%; }
+.phase b { display: block; font: 600 19px/1.15 var(--f-display); }
+.phase b i { font: 500 13px var(--f-mono); color: var(--muted); margin-right: 7px; }
+.phase small { display: block; font: 400 11px/1.4 var(--f-mono); color: var(--muted); margin-top: 3px; }
+
+.note {
+  position: relative; background: var(--event); color: var(--note-ink);
+  font: 400 15px/1.25 var(--f-note); padding: 15px 10px 10px; min-height: 78px;
+  border-radius: 2px; box-shadow: var(--shadow); overflow-wrap: break-word;
+}
+.note.main { font-weight: 700; font-size: 16.5px; min-height: 108px; }
+.note.pivotal { outline: 3px solid var(--tape); outline-offset: 3px; }
+.note.policy { background: var(--policy); font-size: 14.5px; padding-top: 10px; min-height: 0; }
+.note.system { background: var(--system); font-size: 14.5px; padding-top: 10px; min-height: 0; }
+.note.hot { background: var(--hot); font-size: 14.5px; padding-top: 10px; min-height: 0; transform: rotate(-1.4deg); }
+.note.flash { outline: 3px solid var(--fg); outline-offset: 3px; }
+.who {
+  position: absolute; top: -9px; left: 8px; background: var(--actor); color: var(--note-ink);
+  font: 500 10.5px/1 var(--f-mono); padding: 4px 6px; box-shadow: 0 1px 2px rgba(0, 0, 0, .28);
+}
+.who.sys { background: var(--system); }
+.tag { display: block; font: 500 9.5px/1 var(--f-mono); letter-spacing: .09em; text-transform: uppercase; opacity: .72; margin-bottom: 6px; }
+.loop { display: block; font: 500 10.5px/1.3 var(--f-mono); margin-top: 7px; }
+
+.ctx { grid-row: 6; border: 1.5px dashed var(--tape); border-radius: 3px; padding: 9px 10px 10px; min-width: 0; }
+.ctx b { display: block; font: 600 15px/1.2 var(--f-display); }
+.ctx small { display: block; font-size: 12px; line-height: 1.35; color: var(--muted); margin-top: 3px; white-space: normal; max-width: 290px; }
+
+.every { grid-row: 7; grid-column: 2 / -1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.strip { background: color-mix(in srgb, var(--event) 24%, var(--paper)); border-left: 6px solid var(--event); padding: 8px 12px; }
+.strip .stick { max-width: min(660px, 100%); }
+.strip b { font: 700 15.5px/1.25 var(--f-note); }
+.strip small { display: block; font-size: 12px; line-height: 1.4; color: var(--muted); white-space: normal; }
+
+/* below the wall */
+.loops { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 14px 28px; list-style: none; margin: 0; padding: 0; }
+.loops li { border-top: 1px solid var(--line); padding-top: 10px; min-width: 0; }
+.loops b { display: block; font-weight: 600; }
+.loops span { color: var(--muted); font-size: 14px; }
+.section { display: flex; flex-direction: column; gap: 14px; }
+.hots { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 14px 28px; list-style: none; margin: 0; padding: 0; }
+.hots li { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: start; border-top: 1px solid var(--line); padding-top: 10px; min-width: 0; }
+.hots button {
+  grid-row: 1 / 3; font: 500 12px/1 var(--f-mono); background: var(--hot); color: var(--note-ink);
+  border: 0; border-radius: 2px; padding: 6px 7px; cursor: pointer; box-shadow: var(--shadow);
+}
+.hots em { font: 500 11px/1.4 var(--f-mono); font-style: normal; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.hots p { font-size: 14px; line-height: 1.45; min-width: 0; }
+.src { font-size: 13px; color: var(--muted); }
+
+@media (max-width: 560px) {
+  :root { --lane-w: 82px; --col-w: 144px; }
+  .lane { font-size: 10px; letter-spacing: .03em; padding: 2px 6px 2px 10px; }
+}
+</style>
+
+<div class="page">
+  <header class="head prose">
+    <p class="eyebrow">Big picture event storming</p>
+    <h1>QDoc Event Storming</h1>
+    <p class="lede">One version of one quality document, followed from the moment an author creates it to the day it is in force and its recipients have signed. Time runs left to right. Built from <code>requirements/qdoc-one-pager-core.md</code>.</p>
+  </header>
+
+  <ul class="legend" aria-label="Legend">
+    <li><span class="sw event"></span><b>Domain event</b><span class="n" id="n-event"></span><span class="d">something that happened</span></li>
+    <li><span class="sw pivotal"></span><b>Pivotal event</b><span class="n" id="n-pivotal"></span><span class="d">blue tape runs down the wall</span></li>
+    <li><span class="sw actor"></span><b>Person</b><span class="d">who did it</span></li>
+    <li><span class="sw system"></span><b>System</b><span class="d">QDoc itself, or one outside it</span></li>
+    <li><span class="sw policy"></span><b>Rule</b><span class="n" id="n-policy"></span><span class="d">what must hold, or how QDoc reacts</span></li>
+    <li><span class="sw hot"></span><b>Hot spot</b><span class="n" id="n-hot"></span><span class="d">a question the one-pager leaves open</span></li>
+    <li><span class="sw ctx"></span><b>Emerging context</b><span class="n" id="n-ctx"></span><span class="d">where the language changes</span></li>
+  </ul>
+
+  <section class="wall" aria-label="Event storming wall">
+    <div class="jump" id="jump" aria-label="Jump to a phase"></div>
+    <div class="scroller" id="scroller" tabindex="0" role="region" aria-label="Timeline of QDoc domain events, scrolls sideways">
+      <div class="board" id="board"></div>
+    </div>
+    <p class="hint">Scroll the wall sideways, or jump to a phase above.</p>
+  </section>
+
+  <section class="section">
+    <h2>Three ways back to draft</h2>
+    <p class="prose lede">The wall is drawn as one straight line, but a version rarely travels it once. These are the loops.</p>
+    <ul class="loops">
+      <li><b>Reverted from review</b><span>The owner takes the version back to resolve suggestions. A file changed afterwards loses its review marks and approvals; the others keep theirs.</span></li>
+      <li><b>Declined in approval</b><span>One approver declines with a comment and the version goes back to the owner.</span></li>
+      <li><b>New draft of an effective QDoc</b><span>An author opens the next version. The effective one stays in force until the new one reaches its own effective date.</span></li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>Hot spots to settle</h2>
+    <p class="prose lede">These are gaps found while laying out the events, not decisions already made. Each one sits on the wall beside the event it blocks; select its number to see it there.</p>
+    <ul class="hots" id="hots"></ul>
+  </section>
+
+  <p class="src">Source: <code>requirements/qdoc-one-pager-core.md</code>. Events, rules, people and contexts come from that text; the hot spots are inferred from what it does not say.</p>
+</div>
+
+<script>
+(function () {
+  // [number, name, version status, first column, last column]
+  var PH = [
+    [1, "Create", "Draft", 1, 3],
+    [2, "Write", "Draft", 4, 9],
+    [3, "Review (optional)", "In review", 10, 14],
+    [4, "Approve", "In approval, then Approved", 15, 18],
+    [5, "Publish", "Published", 19, 20],
+    [6, "Train", "Published, QACKs signed here", 21, 23],
+    [7, "In force", "Effective, previous one Archived", 24, 26],
+    [8, "Change or retire", "Draft again, or QDoc Retired", 27, 28]
+  ];
+
+  // m: main event [text, who, pivotal, loop]; s: events alongside [text, who, loop];
+  // r: rules ["p" policy | "s" system, text]; h: hot spot
+  var C = [
+    { m: ["QDoc created", "Author", true],
+      s: [["QDoc ID assigned (SOP-12)", "System"]],
+      r: [["p", "The document type gives the ID prefix and the next number"]] },
+    { m: ["First draft version opened", "System"],
+      s: [["Creator became owner", "System"]],
+      r: [["p", "One draft at a time, seen only by its contributors and the quality managers"]],
+      h: "Which number does the very first draft get? The rules only show 1.1, 1.2, then 2.0." },
+    { m: ["Contributor invited", "Owner"],
+      r: [["p", "Only authors can be contributors"]] },
+    { m: ["Content file added", "Contributor"],
+      s: [["Content file edited by several people at once", "Contributor"], ["File change recorded", "System"]],
+      r: [["p", "Every edit is kept. Each file records who changed what and when"]] },
+    { m: ["Comment added", "Contributor"],
+      s: [["Suggestion made", "Contributor"], ["Suggestion accepted or discarded", "Owner"]],
+      r: [["p", "In draft the contributors comment"]] },
+    { m: ["PDF attachment uploaded", "Contributor"],
+      s: [["Attachment quarantined", "System"]],
+      r: [["s", "Malware and content scanner"], ["p", "PDF only, checked from the content, within a size limit"]] },
+    { m: ["Attachment released", "Scanner"],
+      s: [["Attachment failed its scan", "Scanner"], ["Failed attachment removed", "Contributor"]],
+      r: [["p", "Only a released attachment can be downloaded or approved"]],
+      h: "Can a version leave draft while an attachment is still in quarantine, or has failed its scan?" },
+    { m: ["Reviewers, approvers and recipients named", "Owner"],
+      s: [["Version flagged public", "Owner"], ["Quiz added", "Owner"]],
+      r: [["p", "The owner cannot be a reviewer. At least one approver is a quality manager"]],
+      h: "May the owner also approve? When is the quality-manager approver checked: on naming, or on sending?" },
+    { m: ["Retraining of earlier signers decided", "Owner"],
+      s: [["Draft deleted", "Owner", "effective version stays"]],
+      h: "Train again or not: what is the default, and what happens to an earlier signer when the answer is no?" },
+    { m: ["Version sent for review", "Owner"],
+      s: [["Content locked", "System"], ["Reviewers notified", "System"]],
+      r: [["p", "Outside draft nobody edits, adds or removes a file"]] },
+    { m: ["Reviewer commented or suggested", "Reviewer"],
+      r: [["p", "In review the owner, the reviewers and the quality managers comment"]] },
+    { m: ["File marked as reviewed", "Reviewer"],
+      r: [["p", "A review mark is an acknowledgement, not a verdict"]],
+      h: "Review gives no verdict. Can the owner go to approval while files are still unmarked?" },
+    { m: ["Every reviewer marked every file", "System"],
+      s: [["Owner told reviews are complete", "System"]],
+      r: [["p", "Tell the owner once, when the last mark lands"]] },
+    { m: ["Version reverted to draft", "Owner", false, "back to Write"],
+      s: [["File changed after the revert", "Contributor"], ["Marks and approvals of that file dropped", "System"]],
+      r: [["p", "A changed file loses its review marks and approvals. The others keep theirs"]],
+      h: "What counts as a draft iteration for the minor number: each revert, each send, or each save?" },
+    { m: ["Every suggestion accepted or discarded", "Owner"],
+      r: [["p", "No open suggestion goes to approval"]] },
+    { m: ["Version sent for approval", "Owner"],
+      s: [["Approvers notified", "System"]],
+      r: [["p", "In approval nobody comments"]] },
+    { m: ["File approved with e-signature", "Approver"],
+      s: [["Version declined with a comment", "Approver"], ["Version handed back to owner", "System", "back to Write"]],
+      r: [["s", "Identity check: password entered again"]],
+      h: "After a decline, is the version a draft again? Must the decline comment be answered before resending?" },
+    { m: ["Version approved", "System", true],
+      s: [["Next major number taken (2.0)", "System"], ["Owner notified of approval", "System"]],
+      r: [["p", "Approved once each approver has approved each file"]] },
+    { m: ["Version published with an effective date", "Quality manager", true],
+      r: [["s", "Identity check: password entered again"], ["p", "Approved is not effective. Only a quality manager publishes"]],
+      h: "Can the effective date be today, or move after publishing? Can two published versions wait at once?" },
+    { m: ["QACK assigned to each recipient", "System"],
+      s: [["Recipients notified of their QACK", "System"], ["User joined a recipient group and got its QACKs", "System"]],
+      r: [["p", "On publication, one QACK per recipient. A group counts member by member"]],
+      h: "Who maintains recipient groups? If a user leaves a group, is the open QACK cancelled?" },
+    { m: ["Every file read", "Recipient"],
+      s: [["QACK due-soon reminder sent", "System"]],
+      r: [["p", "Until it is effective, a published version is read only through its QACK"]] },
+    { m: ["Quiz passed", "Recipient"],
+      s: [["Quiz failed", "Recipient"], ["Quiz retaken", "Recipient"]],
+      r: [["p", "Passed only with every answer correct. No quiz means read and sign"]],
+      h: "Are quiz retakes unlimited? Is a failed attempt part of the training record?" },
+    { m: ["QACK signed", "Recipient"],
+      r: [["s", "Identity check: password entered again"], ["p", "A signed QACK is the training record"]],
+      h: "Signing needs the password again. What if the organisation signs in through single sign-on?" },
+    { m: ["Effective date reached", "Clock"],
+      r: [["p", "Effective on its date, whether or not every QACK is signed"]] },
+    { m: ["Version became effective", "System", true],
+      s: [["Previous effective version archived", "System"], ["Unsigned QACKs became overdue", "System"]],
+      r: [["p", "At most one effective version per QDoc. The archived one and its signed QACKs are kept"]],
+      h: "Who besides the employee hears about an overdue QACK? How soon is due soon?" },
+    { m: ["Version appeared in libraries", "System"],
+      s: [["Version-effective notification sent", "System"], ["Overdue QACK signed late", "Recipient"]],
+      r: [["p", "The library shows effective versions only: assigned to you, or public. Quality managers see all"]] },
+    { m: ["New draft version opened", "Author", false, "back to Write"],
+      r: [["p", "The effective version stays in force while the next one is written"]],
+      h: "Which authors may open the new draft, and who owns it? Can it start before a published version is effective?" },
+    { m: ["QDoc retired", "Quality manager", true],
+      r: [["s", "Identity check: password entered again"], ["p", "Only a quality manager retires"]],
+      h: "On retiring: what happens to the effective version, its library entry and its open QACKs?" }
+  ];
+
+  // [name, what lives there, first column, last column]
+  var CTX = [
+    ["Document register", "ID, type, owner, version numbers", 1, 3],
+    ["Authoring", "Content files, comments, suggestions, attachments and their scan, people on the version", 4, 9],
+    ["Review and approval", "Locked text, review marks, per-file approvals, signatures", 10, 18],
+    ["Publication", "Effective date, QACK hand-out", 19, 20],
+    ["Training", "QACK, quiz, training record", 21, 23],
+    ["Lifecycle and library", "Effective, archived, retired; who reads what", 24, 28]
+  ];
+
+  var EVERY = [
+    ["Audit entry recorded", "System-wide, for every lifecycle and training action: actor, action, record, time. Nobody, administrators included, can edit or delete one. Only quality managers read the log."],
+    ["Activity entry recorded", "Per QDoc: property, previous value, new value, who and when. Also file and scan events, and the version history with archived versions."],
+    ["Notification sent", "To the user's action list and through the e-mail service: sent for review, reviews complete, sent for approval, declined, approved, QACK assigned, QACK due soon and overdue, version effective."]
+  ];
+
+  var LANES = ["Phase", "Timeline", "Alongside", "Rules and systems", "Hot spots", "Emerging contexts", "On every step"];
+  var SYS = { System: 1, Scanner: 1, Clock: 1 };
+
+  var board = document.getElementById("board");
+  var scroller = document.getElementById("scroller");
+  var count = { event: 0, pivotal: 0, policy: 0, hot: 0 };
+  var mainCells = [];
+  var hotNotes = [];
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function place(e, row, from, to) {
+    e.style.gridRow = String(row);
+    e.style.gridColumn = (from + 1) + " / " + ((to || from) + 2);
+    board.appendChild(e);
+    return e;
+  }
+  function note(kind, text, o) {
+    o = o || {};
+    var n = el("div", "note " + kind);
+    if (o.who) n.appendChild(el("span", "who" + (SYS[o.who] ? " sys" : ""), o.who));
+    if (o.tag) n.appendChild(el("span", "tag", o.tag));
+    n.appendChild(el("span", "txt", text));
+    if (o.loop) n.appendChild(el("span", "loop", "↩ " + o.loop));
+    return n;
+  }
+  function phaseOf(col) {
+    for (var i = 0; i < PH.length; i++) if (col >= PH[i][3] && col <= PH[i][4]) return PH[i];
+    return PH[0];
+  }
+  function reduced() {
+    return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+  function scrollToCol(col) {
+    var cell = mainCells[col];
+    if (!cell) return;
+    var lane = board.querySelector(".lane-bg");
+    var left = cell.offsetLeft - (lane ? lane.offsetWidth : 0) - 14;
+    scroller.scrollTo({ left: Math.max(0, left), behavior: reduced() ? "auto" : "smooth" });
+  }
+
+  board.style.setProperty("--cols", String(C.length));
+
+  var bg = el("div", "lane-bg");
+  board.appendChild(bg);
+  LANES.forEach(function (name, i) {
+    var l = el("div", "lane", name);
+    l.style.gridRow = String(i + 1);
+    board.appendChild(l);
+  });
+
+  var jump = document.getElementById("jump");
+  PH.forEach(function (p) {
+    var band = place(el("div", "phase"), 1, p[3], p[4]);
+    var st = el("span", "stick");
+    var b = el("b");
+    b.appendChild(el("i", null, String(p[0])));
+    b.appendChild(document.createTextNode(p[1]));
+    st.appendChild(b);
+    st.appendChild(el("small", null, p[2]));
+    band.appendChild(st);
+
+    var btn = el("button");
+    btn.type = "button";
+    btn.appendChild(el("span", null, String(p[0])));
+    btn.appendChild(document.createTextNode(p[1]));
+    btn.addEventListener("click", function () { scrollToCol(p[3]); });
+    jump.appendChild(btn);
+  });
+
+  C.forEach(function (c, i) {
+    var col = i + 1;
+    if (c.m[2]) {
+      var pv = el("div", "pivot");
+      pv.style.gridColumn = String(col + 1);
+      board.appendChild(pv);
+      count.pivotal++;
+    }
+
+    var mc = place(el("div", "cell"), 2, col);
+    mc.appendChild(note("main" + (c.m[2] ? " pivotal" : ""), c.m[0], { who: c.m[1], loop: c.m[3] }));
+    mainCells[col] = mc;
+    count.event++;
+
+    if (c.s && c.s.length) {
+      var sc = place(el("div", "cell"), 3, col);
+      c.s.forEach(function (s) {
+        sc.appendChild(note("side", s[0], { who: s[1], loop: s[2] }));
+        count.event++;
+      });
+    }
+    if (c.r && c.r.length) {
+      var rc = place(el("div", "cell"), 4, col);
+      c.r.forEach(function (r) {
+        if (r[0] === "s") {
+          rc.appendChild(note("system", r[1], { tag: "System" }));
+        } else {
+          rc.appendChild(note("policy", r[1], { tag: "Rule" }));
+          count.policy++;
+        }
+      });
+    }
+    if (c.h) {
+      count.hot++;
+      var id = "H" + count.hot;
+      var hc = place(el("div", "cell"), 5, col);
+      var hn = note("hot", c.h, { tag: id });
+      hc.appendChild(hn);
+      hotNotes.push({ id: id, col: col, text: c.h, node: hn });
+    }
+  });
+
+  CTX.forEach(function (x) {
+    var band = place(el("div", "ctx"), 6, x[2], x[3]);
+    var st = el("span", "stick");
+    st.appendChild(el("b", null, x[0]));
+    st.appendChild(el("small", null, x[1]));
+    band.appendChild(st);
+  });
+
+  var every = el("div", "every");
+  EVERY.forEach(function (x) {
+    var s = el("div", "strip");
+    var st = el("span", "stick");
+    st.appendChild(el("b", null, x[0]));
+    st.appendChild(el("small", null, x[1]));
+    s.appendChild(st);
+    every.appendChild(s);
+    count.event++;
+  });
+  board.appendChild(every);
+
+  var hots = document.getElementById("hots");
+  hotNotes.forEach(function (h) {
+    var li = el("li");
+    var btn = el("button", null, h.id);
+    btn.type = "button";
+    btn.setAttribute("aria-label", "Show hot spot " + h.id + " on the wall");
+    btn.addEventListener("click", function () {
+      scroller.scrollIntoView({ block: "nearest", behavior: reduced() ? "auto" : "smooth" });
+      scrollToCol(h.col);
+      h.node.classList.add("flash");
+      setTimeout(function () { h.node.classList.remove("flash"); }, 1800);
+    });
+    li.appendChild(btn);
+    li.appendChild(el("em", null, phaseOf(h.col)[1]));
+    li.appendChild(el("p", null, h.text));
+    hots.appendChild(li);
+  });
+
+  document.getElementById("n-event").textContent = String(count.event);
+  document.getElementById("n-pivotal").textContent = String(count.pivotal);
+  document.getElementById("n-policy").textContent = String(count.policy);
+  document.getElementById("n-hot").textContent = String(count.hot);
+  document.getElementById("n-ctx").textContent = String(CTX.length);
+})();
+</script>
